@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Common.Commands;
+package org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
@@ -16,11 +16,11 @@ public class PositionCommand extends CommandBase {
     Drivetrain drivetrain;
     public Pose targetPose;
 
-    public static PIDFController xController = new PIDFController(xP, 0.0, xD, 0);
-    public static PIDFController yController = new PIDFController(yP, 0.0, yD, 0);
-    public static PIDFController hController = new PIDFController(hP, 0.0, hD, 0);
+    public static PIDFController xController;
+    public static PIDFController yController;
+    public static PIDFController hController;
 
-    public static double ALLOWED_TRANSLATIONAL_ERROR = 5;
+    public static double ALLOWED_TRANSLATIONAL_ERROR = 10;
     public static double ALLOWED_HEADING_ERROR = Math.toRadians(10);
 
     private RobotHardware robot = RobotHardware.getInstance();
@@ -29,11 +29,15 @@ public class PositionCommand extends CommandBase {
     private ElapsedTime stable;
 
     public static double STABLE_MS = 100;
-    public static double DEAD_MS = 2500;
+    public static double DEAD_MS = 1500;
    
     public PositionCommand(Pose targetPose) {
         this.drivetrain = robot.drivetrain;
         this.targetPose = targetPose;
+
+        xController = new PIDFController(xP, 0.0, xD, 0);
+        yController = new PIDFController(yP, 0.0, yD, 0);
+        hController = new PIDFController(hP, 0.0, hD, 0);
 
         xController.reset();
         yController.reset();
@@ -79,24 +83,20 @@ public class PositionCommand extends CommandBase {
         double x_rotated = xPower * Math.cos(-robotPose.heading) - yPower * Math.sin(-robotPose.heading);
         double y_rotated = xPower * Math.sin(-robotPose.heading) + yPower * Math.cos(-robotPose.heading);
 
-
-        // Lower limit for power to counteract friction
         if (Math.abs(x_rotated) < min_power) x_rotated = Math.signum(x_rotated) * min_power;
         if (Math.abs(y_rotated) < min_power) y_rotated = Math.signum(y_rotated) * min_power;
         if (Math.abs(hPower) < min_power_h) hPower = Math.signum(hPower) * min_power;
-
 
         // Feed forward to counteract friction
         x_rotated += Math.signum(x_rotated) * k_static; // counteract friction
         y_rotated += Math.signum(y_rotated) * k_static;
         hPower += Math.signum(hPower) * k_static;
 
-
         hPower = Range.clip(hPower, -MAX_ROTATIONAL_SPEED, MAX_ROTATIONAL_SPEED);
         x_rotated = Range.clip(x_rotated, -MAX_TRANSLATIONAL_SPEED / X_GAIN, MAX_TRANSLATIONAL_SPEED / X_GAIN);
-        y_rotated = Range.clip(y_rotated, -MAX_TRANSLATIONAL_SPEED, MAX_TRANSLATIONAL_SPEED);
+        y_rotated = Range.clip(y_rotated, -MAX_TRANSLATIONAL_SPEED/Y_GAIN, MAX_TRANSLATIONAL_SPEED/Y_GAIN);
 
-        return new Pose(x_rotated * X_GAIN, y_rotated, hPower);
+        return new Pose(x_rotated * X_GAIN, y_rotated * Y_GAIN, hPower);
     }
 
     @Override

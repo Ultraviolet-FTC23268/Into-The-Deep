@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.Common.Utility;
 
 public class PDFLController {
-    private double kP, kD, kF, kLIntercept, kLSlope;
+    private double kP, kD, kF, kL, kLIntercept, kLSlope;
     private double lastError = 0;
     private double lastTimeStamp = 0;
     private double minErrorThreshhold = 0;
@@ -80,21 +80,23 @@ public class PDFLController {
         this.lastTimeStamp = lastTimeStamp;
     }
 
-    public void setConstants(double kP, double kD, double kF, double kLIntercept, double kLSlope, double minErrorThreshhold) {
+    public void setConstants(double kP, double kD, double kF, double kL, double minErrorThreshhold) {
         this.kP = kP;
         this.kD = kD;
         this.kF = kF;
-        this.kLIntercept = kLIntercept;
-        this.kLSlope = kLSlope;
+        this.kL = kL;
+        //this.kLIntercept = kLIntercept;
+        //this.kLSlope = kLSlope;
         this.minErrorThreshhold = minErrorThreshhold;
     }
 
-    public PDFLController(double kP, double kD, double kF, double kLIntercept, double kLSlope, double minErrorThreshhold) {
+    public PDFLController(double kP, double kD, double kF, double kL, double minErrorThreshhold) {
         this.kP = kP;
         this.kD = kD;
         this.kF = kF;
-        this.kLIntercept = kLIntercept;
-        this.kLSlope = kLSlope;
+        this.kL = kL;
+        //this.kLIntercept = kLIntercept;
+        //this.kLSlope = kLSlope;
         this.minErrorThreshhold = minErrorThreshhold;
     }
 
@@ -112,7 +114,7 @@ public class PDFLController {
         double P = error * kP;
         double D = dt > 1E6 ? (dError / dt) * kD : 0;
         double F = kF;
-        double L = Math.abs(error) > minErrorThreshhold ? Math.signum(error) * (kLIntercept + kLSlope * current) : 0;
+        double L = Math.abs(error) > minErrorThreshhold ? Math.signum(error) * kL : 0;//(kLIntercept + kLSlope * current) : 0;
         // We dont want to add a lower limit term if we are within the
         // minErrorThreshhold
 

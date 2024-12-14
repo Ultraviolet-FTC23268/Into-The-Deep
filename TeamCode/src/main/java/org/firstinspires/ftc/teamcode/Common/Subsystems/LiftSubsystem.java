@@ -27,8 +27,7 @@ public class LiftSubsystem extends SubsystemBase {
     private AsymmetricMotionProfile liftProfile;
     public ProfileState liftMotionState;
     public LiftState liftState = LiftState.RETRACTED;
-
-    public PDFLController controller;
+    public PIDController libController;
 
     public int leftLiftPos;
     public int rightLiftPos;
@@ -43,19 +42,22 @@ public class LiftSubsystem extends SubsystemBase {
     public double time = 0.0;
     public static boolean isUp = false;
 
-    public static double P = 0;
-    public static double D = 0;
-    public static double F = 0;
-    public static double Li = 0;
-    public static double Ls = 0;
-    public static double homeConstant = 0;
+    public static double P = 0.01;
+    public static double D = 0.0002;
+    //public static double F = 0;
+
+    //public static double L = 0.08;
+    //public static double Li = 0;
+    //public static double Ls = 0;
+    private boolean home = false;
+    private double homeConstant = 0.2;
 
 
     public enum LiftState {
         RETRACTED,
         LOW_BUCKET,
         HIGH_BUCKET,
-        LOW_CHAMBER,
+        PRE_HIGH_CHAMBER,
         HIGH_CHAMBER
 
     }
@@ -63,8 +65,7 @@ public class LiftSubsystem extends SubsystemBase {
     public LiftSubsystem() {
 
         this.liftProfile = new AsymmetricMotionProfile(0, 1, new ProfileConstraints(0, 0, 0));
-        this.controller = new PDFLController(P, D, F, Li, Ls, LIFT_ERROR_TOLERANCE);
-        this.controller.setHomeConstant(homeConstant);
+        this.libController = new PIDController(P, 0, D);
         this.timer = new ElapsedTime();
     }
 
@@ -82,8 +83,8 @@ public class LiftSubsystem extends SubsystemBase {
             case HIGH_BUCKET:
                 setTargetPos(HIGH_BUCKET_POS);
                 break;
-            case LOW_CHAMBER:
-                setTargetPos(LOW_CHAMBER_POS);
+            case PRE_HIGH_CHAMBER:
+                setTargetPos(PRE_HIGH_CHAMBER_POS);
                 break;
             case HIGH_CHAMBER:
                 setTargetPos(HIGH_CHAMBER_POS);
@@ -94,7 +95,8 @@ public class LiftSubsystem extends SubsystemBase {
     }
 
     public void loop() {
-        this.controller.setConstants(P, D, F, Li, Ls, LIFT_ERROR_TOLERANCE);
+        //this.controller.setConstants(P, D, F, L, LIFT_ERROR_TOLERANCE);
+        this.libController.setPID(P, 0, D);
 
         liftMotionState = liftProfile.calculate(timer.time());
         if (liftMotionState.v != 0) {
@@ -102,17 +104,27 @@ public class LiftSubsystem extends SubsystemBase {
             time = timer.time();
         }
 
-        withinTolerance = Math.abs(getRightPos() - getTargetPos()) < LIFT_ERROR_TOLERANCE;
+        withinTolerance = Math.abs(getLeftPos() - getTargetPos()) < LIFT_ERROR_TOLERANCE;
 
-        power = Range.clip(controller.calculate(getRightPos(), getTargetPos()), -1, 1);
+        power = Range.clip(libController.calculate(getLeftPos(), getTargetPos()), -1, 1);
 
-        this.controller.setHome(liftState == LiftState.RETRACTED);
+        if(withinTolerance)
+            power = 0;
+
+        /*if(liftState == LiftState.RETRACTED && withinTolerance)
+            home = true;
+        else
+            home = false;
+
+        if(home)
+            power = homeConstant;*/
 
     }
+
     public void read() {
         try {
-            //leftLiftPos = robot.leftArmEncoder.getPosition();
-            rightLiftPos = robot.rightArmEncoder.getPosition();
+            leftLiftPos = robot.leftLiftEncoder.getPosition();
+            //rightLiftPos = robot.rightLiftEncoder.getPosition();
 
         } catch (Exception e) {
             leftLiftPos = 0;
@@ -124,7 +136,7 @@ public class LiftSubsystem extends SubsystemBase {
         if (robot.enabled) {
             try {
                 robot.liftLeft.set(power);
-                robot.liftRight.set(-power);
+                robot.liftRight.set(power);
             } catch (Exception e) {
             }
         }

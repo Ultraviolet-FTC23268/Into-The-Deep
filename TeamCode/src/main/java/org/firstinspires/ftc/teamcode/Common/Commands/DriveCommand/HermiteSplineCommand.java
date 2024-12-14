@@ -1,10 +1,8 @@
-package org.firstinspires.ftc.teamcode.Common.Commands;
+package org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand;
 
-import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Common.Drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
@@ -13,7 +11,7 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.*;
 import java.util.ArrayList;
 
-@Config
+//@Config
 public class HermiteSplineCommand extends CommandBase {
     private RobotHardware robot = RobotHardware.getInstance();
     Drivetrain drivetrain = robot.drivetrain;

@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.Opmodes.Teleop;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.ConditionalCommand;
@@ -11,13 +13,22 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSampleCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSpecimenCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ScoreCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
+import org.firstinspires.ftc.teamcode.Common.Subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import org.firstinspires.ftc.teamcode.Common.Utility.MathUtils;
 
 @Config
-@TeleOp(name = "Mecanum Teleop")
+@TeleOp(name = "RAH RAH RAH RAH")
 public class Teleop extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
@@ -38,6 +49,27 @@ public class Teleop extends CommandOpMode {
         robot.init(hardwareMap);
         robot.read();
 
+        robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
+        robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
+
+        gamepadEx.getGamepadButton(GamepadKeys.Button.X)
+                .whenPressed(() -> schedule(new HighSpecimenCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.START)
+                .whenPressed(() -> schedule(new ManualSpecOverrideCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.A)
+                .whenPressed(() -> schedule(new HighSampleCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.B)
+                .whenPressed(() -> schedule(new ScoreCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+                .whenPressed(() -> schedule(new ExtendIntakeCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(() -> schedule(new RetractIntakeCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(() -> schedule(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)));
+
+
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
+
         while (opModeInInit()) {
             telemetry.addLine("Robot Initialized.");
             telemetry.update();
@@ -54,7 +86,7 @@ public class Teleop extends CommandOpMode {
         robot.write();
 
         double left_stick_y = -gamepad1.left_stick_y,
-                left_stick_x = gamepad1.left_stick_x;
+                left_stick_x = -gamepad1.left_stick_x;
         double theta = Math.atan2(left_stick_y, left_stick_x) + Math.PI * 0.5;
 
         if (Math.abs(theta) < Globals.ANGLE_SNAPPING_THRESHHOLD || Math.abs(theta - Math.PI) < Globals.ANGLE_SNAPPING_THRESHHOLD) {
@@ -64,7 +96,7 @@ public class Teleop extends CommandOpMode {
             left_stick_y = 0;
         }
 
-        robot.drivetrain.set(new Pose(left_stick_x, left_stick_y, MathUtils.joystickScalar(-gamepad1.left_trigger + gamepad1.right_trigger, 0.01)), 0);
+        robot.drivetrain.set(new Pose(left_stick_y, left_stick_x, MathUtils.joystickScalar(gamepad1.right_trigger - gamepad1.left_trigger, 0.01)), 0);
 
 
         double loop = System.nanoTime();

@@ -7,13 +7,14 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Utility.MathUtils;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 @Autonomous(name = "Localizer Test")
-//@Disabled
+@Disabled
 public class LocalizerTest extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();

@@ -501,6 +501,10 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
                 hOrientation);
     }
 
+    /* getPosition().getX(DistanceUnit.INCH),
+                getPosition().getY(DistanceUnit.INCH),
+                getPosition().getHeading(AngleUnit.RADIANS)*/
+
 
 
 }

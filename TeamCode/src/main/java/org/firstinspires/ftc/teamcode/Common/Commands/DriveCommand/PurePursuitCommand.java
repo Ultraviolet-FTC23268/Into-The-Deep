@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Common.Commands;
+package org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
@@ -149,9 +149,9 @@ public class PurePursuitCommand extends CommandBase {
 
         hPower = Range.clip(hPower, -MAX_ROTATIONAL_SPEED, MAX_ROTATIONAL_SPEED);
         x_rotated = Range.clip(x_rotated, -MAX_TRANSLATIONAL_SPEED / X_GAIN, MAX_TRANSLATIONAL_SPEED / X_GAIN);
-        y_rotated = Range.clip(y_rotated, -MAX_TRANSLATIONAL_SPEED, MAX_TRANSLATIONAL_SPEED);
+        y_rotated = Range.clip(y_rotated, -MAX_TRANSLATIONAL_SPEED/Y_GAIN, MAX_TRANSLATIONAL_SPEED/Y_GAIN);
 
-        return new Pose(x_rotated * X_GAIN, y_rotated, hPower);
+        return new Pose(x_rotated * X_GAIN, y_rotated * Y_GAIN, hPower);
     }
 
     public static Vector2D lineCircleIntersection(Vector2D pointA, Vector2D pointB, Vector2D center, double radius) {

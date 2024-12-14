@@ -25,9 +25,9 @@ public class MecanumDrivetrain implements Drivetrain {
 
         Vector2D input = new Vector2D(strafeSpeed, forwardSpeed).rotate(-gyroAngle);
 
-        strafeSpeed = Range.clip(input.x, -1, 1);
-        forwardSpeed = Range.clip(input.y, -1, 1);
-        turnSpeed = Range.clip(turnSpeed, -1, 1);
+        strafeSpeed = Range.clip(input.y, -1, 1);
+        forwardSpeed = Range.clip(input.x, -1, 1);
+        turnSpeed = Range.clip(-turnSpeed, -1, 1);
 
         double[] wheelSpeeds = new double[4];
 

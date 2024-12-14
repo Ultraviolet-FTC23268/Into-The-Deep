@@ -1,17 +1,28 @@
 package org.firstinspires.ftc.teamcode.Common.Utility;
 
+import android.util.Size;
+
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.LynxConstants;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDrivetrain;
+import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
+import org.firstinspires.ftc.teamcode.Common.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.LiftSubsystem;
+import org.firstinspires.ftc.teamcode.Common.Vision.ClawAlignmentPipeline;
 import org.firstinspires.ftc.teamcode.Common.goBILDA.GoBildaPinpointDriver;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.VisionProcessor;
 
 import java.util.List;
 
@@ -25,8 +36,24 @@ public class RobotHardware {
     public MotorEx liftLeft;
     public MotorEx liftRight;
 
-    public Motor.Encoder leftArmEncoder;
-    public Motor.Encoder rightArmEncoder;
+    public Servo intakeClawServo;
+    public Servo depositClawServo;
+    public Servo intakeElbowServo;
+    public Servo depositElbowServo;
+    public Servo depositArmServo;
+    public Servo depositArm2Servo;
+    public Servo intakeArmServo;
+    public Servo intakeArm2Servo;
+    public Servo intakeWristServo;
+    public Servo railServo;
+    public Servo slideLeftServo;
+    public Servo slideRightServo;
+
+    public Motor.Encoder leftLiftEncoder;
+    public Motor.Encoder rightLiftEncoder;
+
+    public RevColorSensorV3 depositClawColor;
+    public RevColorSensorV3 intakeClawColor;
 
     //public BNO055IMU imu;
 
@@ -44,7 +71,15 @@ public class RobotHardware {
 
     public MecanumDrivetrain drivetrain;
     public LiftSubsystem lift;
+    public DepositSubsystem deposit;
+    public IntakeSubsystem intake;
     public GoBildaPinpointDriver localizer;
+
+    private VisionPortal visionPortal;
+    private ClawAlignmentPipeline alignmentPipeline;
+
+    public boolean depositRead = false;
+    public boolean intakeRead = false;
 
     public static RobotHardware getInstance() {
         if (instance == null) {
@@ -73,10 +108,8 @@ public class RobotHardware {
         backLeftMotor = hardwareMap.get(DcMotorEx.class, "backLeftMotor");
         backRightMotor = hardwareMap.get(DcMotorEx.class, "backRightMotor");
 
-        frontLeftMotor.setDirection(DcMotorEx.Direction.REVERSE);
-        frontRightMotor.setDirection(DcMotorEx.Direction.FORWARD);
-        backLeftMotor.setDirection(DcMotorEx.Direction.REVERSE);
-        backRightMotor.setDirection(DcMotorEx.Direction.FORWARD);
+        frontRightMotor.setDirection(DcMotorEx.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotorEx.Direction.REVERSE);
 
         frontLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -94,17 +127,43 @@ public class RobotHardware {
         liftLeft.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         liftRight.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        leftArmEncoder = new MotorEx(hardwareMap, "leftLiftMotor").encoder;
-        rightArmEncoder = new MotorEx(hardwareMap, "rightLiftMotor").encoder;
+        liftLeft.motor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        leftLiftEncoder = new MotorEx(hardwareMap, "frontLeftMotor").encoder;
+        rightLiftEncoder = new MotorEx(hardwareMap, "frontRightMotor").encoder;
+
+        leftLiftEncoder.setDirection(Motor.Direction.REVERSE);
+
+        intakeClawServo = hardwareMap.get(Servo.class, "intakeClawServo");
+        depositClawServo = hardwareMap.get(Servo.class, "depositClawServo");
+        intakeElbowServo = hardwareMap.get(Servo.class, "intakeElbowServo");
+        depositElbowServo = hardwareMap.get(Servo.class, "depositElbowServo");
+        depositArmServo = hardwareMap.get(Servo.class, "depositArmServo");
+        depositArm2Servo = hardwareMap.get(Servo.class, "depositArm2Servo");
+        intakeArmServo = hardwareMap.get(Servo.class, "intakeArmServo");
+        intakeArm2Servo = hardwareMap.get(Servo.class, "intakeArm2Servo");
+        intakeWristServo = hardwareMap.get(Servo.class, "intakeWristServo");
+        railServo = hardwareMap.get(Servo.class, "railServo");
+        slideLeftServo = hardwareMap.get(Servo.class, "slideLeftServo");
+        slideRightServo = hardwareMap.get(Servo.class, "slideRightServo");
+
+        depositArm2Servo.setDirection(Servo.Direction.REVERSE);
+        intakeArm2Servo.setDirection(Servo.Direction.REVERSE);
+        slideLeftServo.setDirection(Servo.Direction.REVERSE);
 
         localizer = hardwareMap.get(GoBildaPinpointDriver.class,"localizer");
-        localizer.setOffsets(-84.0, -168.0); //FIND OUT ACTUAL VALUES
+        localizer.setOffsets(-98.2, -171.651);
         localizer.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        localizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD); //CHECK THIS
+        localizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         localizer.resetPosAndIMU();
+
+        depositClawColor = hardwareMap.get(RevColorSensorV3.class, "depositClawColor");
+        intakeClawColor = hardwareMap.get(RevColorSensorV3.class, "intakeClawColor");
 
         drivetrain = new MecanumDrivetrain();
         lift = new LiftSubsystem();
+        deposit = new DepositSubsystem();
+        intake = new IntakeSubsystem();
 
         modules = hardwareMap.getAll(LynxModule.class);
         for (LynxModule m : modules) {
@@ -114,12 +173,19 @@ public class RobotHardware {
                 CONTROL_HUB = m;
         }
 
+        alignmentPipeline = new ClawAlignmentPipeline();
+
         voltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
 
     }
 
     public void read() {
         lift.read();
+        if(depositRead)
+            deposit.read();
+        if(intakeRead)
+            intake.read();
+
     }
 
     public void write() {
@@ -129,6 +195,7 @@ public class RobotHardware {
 
     public void update() {
         localizer.update();
+        lift.loop();
     }
 
     public void clearBulkCache() {
@@ -138,6 +205,27 @@ public class RobotHardware {
 
     public double getVoltage() {
         return voltage;
+    }
+
+    public void startCamera() {
+
+        visionPortal = new VisionPortal.Builder()
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam"))
+                .setCameraResolution(new Size(1920, 1080))
+                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+                .addProcessors()
+                .enableLiveView(false)
+                .build();
+
+        visionPortal.setProcessorEnabled(alignmentPipeline, false);
+    }
+
+    public void closeCamera() {
+        if (visionPortal != null) visionPortal.close();
+    }
+
+    public void setProcessorEnabled(VisionProcessor processor, boolean enabled) {
+        this.visionPortal.setProcessorEnabled(processor, enabled);
     }
 
 }

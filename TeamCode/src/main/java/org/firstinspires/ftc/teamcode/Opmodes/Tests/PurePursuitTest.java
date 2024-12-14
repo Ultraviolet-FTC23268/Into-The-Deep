@@ -2,23 +2,22 @@ package org.firstinspires.ftc.teamcode.Opmodes.Tests;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
-import org.firstinspires.ftc.teamcode.Common.Commands.PurePursuitCommand;
-import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Point;
+import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitCommand;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Vector2D;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 import java.util.ArrayList;
 
-@Config
+//@Config
 @Autonomous(name = "PurePursuit Test")
-// @Disabled
+@Disabled
 public class PurePursuitTest extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
