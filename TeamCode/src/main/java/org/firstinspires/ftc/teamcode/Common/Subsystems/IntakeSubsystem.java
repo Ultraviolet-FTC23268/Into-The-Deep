@@ -140,6 +140,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeElbowServo.setPosition(elbowIntakePos);
                 pickupReady = true;
                 robot.startCamera();
+
                 break;
             case PICK_UP:
                 update(ClawState.OPEN);

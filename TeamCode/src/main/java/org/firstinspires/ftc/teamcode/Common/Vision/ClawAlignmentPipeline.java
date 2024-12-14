@@ -75,6 +75,7 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         Mat combinedMask = new Mat();
         if (allianceColor == 1)
             Core.bitwise_or(redMask, yellowMask, combinedMask);
+
         else
             Core.bitwise_or(blueMask, yellowMask, combinedMask);
 
