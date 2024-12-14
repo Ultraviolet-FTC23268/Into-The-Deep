@@ -31,11 +31,18 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     private double blockAngle = 0.0;
     private double avgAngle = 0;
 
+    private double allianceColor = 0;
+
     private List<Double> angles = new ArrayList<Double>();
 
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
         lastFrame.set(Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565));
+        if (Globals.ALLIANCE == Color.BLUE)
+            allianceColor = 0;
+        else
+            allianceColor = 1;
+
     }
 
     @Override
@@ -45,10 +52,12 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
 
         // Create masks for red, yellow, and blue
+
         Mat redMask1 = new Mat();
         Mat redMask2 = new Mat();
-        Mat yellowMask = new Mat();
         Mat blueMask = new Mat();
+        Mat yellowMask = new Mat();
+
 
         // Red color detection
         Core.inRange(hsv, new Scalar(0, 120, 70), new Scalar(10, 255, 255), redMask1);
@@ -64,8 +73,10 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
 
         // Combine all masks
         Mat combinedMask = new Mat();
-        Core.bitwise_or(redMask, yellowMask, combinedMask);
-        Core.bitwise_or(combinedMask, blueMask, combinedMask);
+        if (allianceColor == 1)
+            Core.bitwise_or(redMask, yellowMask, combinedMask);
+        else
+            Core.bitwise_or(blueMask, yellowMask, combinedMask);
 
         // Clean up noise in the mask
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));

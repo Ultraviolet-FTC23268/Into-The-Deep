@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Common.Subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Common.Utility.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
@@ -111,6 +112,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeArmServo.setPosition(iArmTransferPos);
                 robot.intakeArm2Servo.setPosition(iArmTransferPos + iArmOffset);
                 robot.intakeElbowServo.setPosition(elbowPreTransferPos);
+                robot.closeCamera();
                 break;
             case TRANSFER:
                 update(ExtendoState.RETRACTED);
@@ -137,6 +139,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeArm2Servo.setPosition(iArmIntakePos + iArmOffset);
                 robot.intakeElbowServo.setPosition(elbowIntakePos);
                 pickupReady = true;
+                robot.startCamera();
                 break;
             case PICK_UP:
                 update(ClawState.OPEN);
@@ -250,6 +253,15 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public Color getDetectedColor() {
         return detectedColor;
+    }
+
+    public static double wristMinPos = 0.28;
+    public static double wristMaxPos = 0.93;
+
+    public void loop() {
+        double servoAngle = Range.clip(wristNeutralPos - ((alignmentPipeline.getSampleAngle() - 90)/300), wristMinPos, wristMaxPos);
+        if (intakeState == IntakeState.INTAKE)
+            robot.intakeWristServo.setPosition(servoAngle);
     }
 
 }
