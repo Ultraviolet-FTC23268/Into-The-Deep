@@ -31,7 +31,6 @@ public class PickUpCommand extends SequentialCommandGroup {
                     new ExtendoCommand(IntakeSubsystem.ExtendoState.TRANSFER),
                     new InstantCommand(() -> RobotHardware.getInstance().intakeRead = false)
                 );
-
             else
                 addCommands(
                         new IntakeCommand(IntakeSubsystem.IntakeState.INTAKE),
