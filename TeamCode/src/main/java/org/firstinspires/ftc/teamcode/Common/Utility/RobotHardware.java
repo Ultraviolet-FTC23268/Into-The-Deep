@@ -76,7 +76,7 @@ public class RobotHardware {
     public GoBildaPinpointDriver localizer;
 
     private VisionPortal visionPortal;
-    private ClawAlignmentPipeline alignmentPipeline;
+    public ClawAlignmentPipeline alignmentPipeline;
 
     public boolean depositRead = false;
     public boolean intakeRead = false;
@@ -196,6 +196,7 @@ public class RobotHardware {
     public void update() {
         localizer.update();
         lift.loop();
+        intake.loop();
     }
 
     public void clearBulkCache() {
@@ -216,8 +217,6 @@ public class RobotHardware {
                 .addProcessors()
                 .enableLiveView(false)
                 .build();
-
-        visionPortal.setProcessorEnabled(alignmentPipeline, false);
     }
 
     public void closeCamera() {

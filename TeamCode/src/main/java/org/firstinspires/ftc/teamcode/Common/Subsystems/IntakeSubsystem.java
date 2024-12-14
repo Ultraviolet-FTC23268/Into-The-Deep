@@ -15,14 +15,13 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private final RobotHardware robot = RobotHardware.getInstance();
 
-    private ClawAlignmentPipeline alignmentPipeline;
-    private VisionPortal portal;
-
     public IntakeState intakeState = IntakeState.OVERVIEW;
     public ClawState clawState = ClawState.OPEN;
     public ExtendoState extendoState = ExtendoState.RETRACTED;
 
     public static double wristNeutralPos = 0.61;
+    public static double wristMinPos = 0.28;
+    public static double wristMaxPos = 0.93;
 
     public static double iClawClosedPos = 0.41;
     public static double iClawOpenPos = 0.2;
@@ -30,7 +29,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public static double slideRetractedPos = 0.2;
     public static double slidePreTransferPos = 0.22;
-    public static double slideExtendedPos = 0.44;
+    public static double slideExtendedPos = 0.4;
     public static double slideOffset = 0.0;
 
     public static double elbowNeutralPos = 0.15;
@@ -52,7 +51,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private boolean pickupReady = false;
 
-    public static double maxExtension = 0.44;
+    public static double maxExtension = 0.4;
 
     private Color detectedColor = Color.NOTHING;
     private float[] hsvValues = new float[3];
@@ -248,21 +247,17 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public boolean sampleDetected() {
-        Color allianceColor = Globals.ALLIANCE;
-        return (detectedColor == allianceColor || detectedColor == Color.YELLOW) && alpha > Globals.intakeAlphaThreshold;
+        return (detectedColor == Globals.ALLIANCE || detectedColor == Color.YELLOW) && alpha > Globals.intakeAlphaThreshold;
     }
 
     public Color getDetectedColor() {
         return detectedColor;
     }
 
-    public static double wristMinPos = 0.28;
-    public static double wristMaxPos = 0.93;
-
     public void loop() {
-        double servoAngle = Range.clip(wristNeutralPos - ((alignmentPipeline.getSampleAngle() - 90)/300), wristMinPos, wristMaxPos);
-        if (intakeState == IntakeState.INTAKE)
-            robot.intakeWristServo.setPosition(servoAngle);
+        if (intakeState == IntakeState.INTAKE) {
+        double servoAngle = Range.clip(wristNeutralPos - ((robot.alignmentPipeline.getSampleAngle() - 90)/300), wristMinPos, wristMaxPos);
+            robot.intakeWristServo.setPosition(servoAngle != wristMinPos ? servoAngle : wristNeutralPos);}
     }
 
 }
