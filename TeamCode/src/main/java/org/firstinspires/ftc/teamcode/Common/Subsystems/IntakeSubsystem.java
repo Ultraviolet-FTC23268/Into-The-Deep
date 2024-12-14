@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Common.Subsystems;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.util.Range;
@@ -8,7 +10,9 @@ import org.firstinspires.ftc.teamcode.Common.Utility.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import org.firstinspires.ftc.teamcode.Common.Vision.ClawAlignmentPipeline;
+import org.firstinspires.ftc.teamcode.Opmodes.Teleop.Teleop;
 import org.firstinspires.ftc.vision.VisionPortal;
+
 
 @Config
 public class IntakeSubsystem extends SubsystemBase {
@@ -261,6 +265,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public void loop() {
         double servoAngle = Range.clip(wristNeutralPos - ((alignmentPipeline.getSampleAngle() - 90)/300), wristMinPos, wristMaxPos);
+        slideExtendedPos = (gamepad1.touchpad_finger_1_y * maxExtension);
         if (intakeState == IntakeState.INTAKE)
             robot.intakeWristServo.setPosition(servoAngle);
     }
