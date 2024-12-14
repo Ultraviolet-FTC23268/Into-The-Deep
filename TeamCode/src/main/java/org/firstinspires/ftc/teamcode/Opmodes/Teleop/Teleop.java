@@ -66,7 +66,7 @@ public class Teleop extends CommandOpMode {
                 .whenPressed(() -> schedule(new RetractIntakeCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(() -> schedule(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)));
-        gamepad1.touchpad_finger_1_y
+
 
 
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
