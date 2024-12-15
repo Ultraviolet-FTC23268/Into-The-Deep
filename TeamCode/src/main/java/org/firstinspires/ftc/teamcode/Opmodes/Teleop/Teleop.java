@@ -13,6 +13,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSampleCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSpecimenCommand;
@@ -20,6 +21,7 @@ import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOve
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ScoreCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.iClawCommand;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
@@ -36,8 +38,6 @@ public class Teleop extends CommandOpMode {
     private GamepadEx gamepadEx2;
 
     private double loopTime = 0.0;
-    private boolean lastJoystickUpRight = false;
-    private boolean lastJoystickDownRight = false;
 
     @Override
     public void initialize() {
@@ -50,7 +50,8 @@ public class Teleop extends CommandOpMode {
         robot.read();
 
         robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
-        robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
+        robot.intake.update(IntakeSubsystem.IntakeState.EXTENDED);
+        robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED);
 
         gamepadEx.getGamepadButton(GamepadKeys.Button.X)
                 .whenPressed(() -> schedule(new HighSpecimenCommand()));
@@ -66,6 +67,8 @@ public class Teleop extends CommandOpMode {
                 .whenPressed(() -> schedule(new RetractIntakeCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(() -> schedule(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(() -> schedule(new iClawCommand(IntakeSubsystem.ClawState.OPEN)));
 
 
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
@@ -85,6 +88,10 @@ public class Teleop extends CommandOpMode {
         robot.update();
         robot.write();
 
+        robot.intake.touchpadValue = -gamepadEx.getRightY();
+        robot.intake.leftShoulderInput = gamepadEx.getButton(GamepadKeys.Button.LEFT_BUMPER);
+        robot.intake.rightShoulderInput = gamepadEx.getButton(GamepadKeys.Button.RIGHT_BUMPER);
+
         double left_stick_y = -gamepad1.left_stick_y,
                 left_stick_x = -gamepad1.left_stick_x;
         double theta = Math.atan2(left_stick_y, left_stick_x) + Math.PI * 0.5;
@@ -101,6 +108,7 @@ public class Teleop extends CommandOpMode {
 
         double loop = System.nanoTime();
         telemetry.addData("hz: ", 1000000000 / (loop - loopTime));
+        telemetry.addData("Sample Angle ", robot.alignmentPipeline.getSampleAngle());
         loopTime = loop;
         telemetry.update();
     }

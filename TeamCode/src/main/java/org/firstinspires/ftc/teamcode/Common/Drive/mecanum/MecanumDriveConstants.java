@@ -7,7 +7,7 @@ public class MecanumDriveConstants {
     public static double MAX_LINEAR_SPEED = 79.2;
     public static double MAX_LINEAR_ACCELERATION = 20;
 
-    public static double MAX_TRANSLATIONAL_SPEED = 0.7;
+    public static double MAX_TRANSLATIONAL_SPEED = 1;
     public static double MAX_ROTATIONAL_SPEED = 0.5;
 
     public static double STRAFE_GAIN = 8;

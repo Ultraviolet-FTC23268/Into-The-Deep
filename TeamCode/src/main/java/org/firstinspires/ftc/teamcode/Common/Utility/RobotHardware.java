@@ -173,9 +173,8 @@ public class RobotHardware {
                 CONTROL_HUB = m;
         }
 
-        alignmentPipeline = new ClawAlignmentPipeline();
-
         voltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
+        alignmentPipeline = new ClawAlignmentPipeline();
 
     }
 
@@ -210,11 +209,13 @@ public class RobotHardware {
 
     public void startCamera() {
 
+        alignmentPipeline = new ClawAlignmentPipeline();
+
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam"))
                 .setCameraResolution(new Size(1920, 1080))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
-                .addProcessors()
+                .addProcessors(alignmentPipeline)
                 .enableLiveView(false)
                 .build();
     }

@@ -29,7 +29,7 @@ public class PositionCommand extends CommandBase {
     private ElapsedTime stable;
 
     public static double STABLE_MS = 100;
-    public static double DEAD_MS = 1500;
+    public static double DEAD_MS = 1250;
    
     public PositionCommand(Pose targetPose) {
         this.drivetrain = robot.drivetrain;

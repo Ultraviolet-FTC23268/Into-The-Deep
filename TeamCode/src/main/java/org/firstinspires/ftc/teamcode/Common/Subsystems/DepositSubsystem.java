@@ -32,12 +32,14 @@ public class DepositSubsystem extends SubsystemBase {
     public static double elbowSampDepositPos = 0.47;
     public static double elbowSpecDepositPos = 0.1;
     public static double elbowSpecIntakePos = 0.33;
+    public static double elbowAutoPos = 0.35;
 
     public static double dArmNeutralPos = 0.43;
     public static double dArmTransferPos = 0.17;
     public static double dArmSampDepositPos = 0.55;
     public static double dArmSpecDepositPos = 0.41;
-    public static double dArmSpecIntakePos = 0.81;
+    public static double dArmSpecIntakePos = 0.8;
+    public static double dArmAutoPos = 0.2;
 
     public static double dArmOffset = 0;
 
@@ -46,6 +48,7 @@ public class DepositSubsystem extends SubsystemBase {
     private int alpha = 0;
 
     public enum DepositState {
+        AUTO,
         NEUTRAL,
         TRANSFER,
         SAMP_DEPOSIT,
@@ -65,6 +68,14 @@ public class DepositSubsystem extends SubsystemBase {
         depositState = state;
         switch (state) {
 
+            case AUTO:
+                //update(ClawState.CLOSED);
+                robot.depositElbowServo.setPosition(elbowAutoPos);
+                robot.depositArmServo.setPosition(dArmAutoPos);
+                robot.depositArm2Servo.setPosition(dArmAutoPos + dArmOffset);
+                robot.railServo.setPosition(railRetractedPos);
+                //update(ClawState.OPEN);
+                break;
             case NEUTRAL:
                 //update(ClawState.CLOSED);
                 robot.depositElbowServo.setPosition(elbowNeutralPos);

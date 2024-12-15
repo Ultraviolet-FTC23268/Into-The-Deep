@@ -1,5 +1,19 @@
 package org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand;
 
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.MAX_ROTATIONAL_SPEED;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.MAX_TRANSLATIONAL_SPEED;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.X_GAIN;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.Y_GAIN;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.hD;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.hP;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.k_static;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.min_power;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.min_power_h;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.xD;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.xP;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.yD;
+import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.yP;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.controller.PIDFController;
@@ -10,11 +24,11 @@ import org.firstinspires.ftc.teamcode.Common.Drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Vector2D;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
-import static org.firstinspires.ftc.teamcode.Common.Drive.mecanum.MecanumDriveConstants.*;
+
 import java.util.ArrayList;
 
 @Config
-public class PurePursuitCommand extends CommandBase {
+public class PurePursuitConstantCommand extends CommandBase {
 
     private RobotHardware robot = RobotHardware.getInstance();
     Drivetrain drivetrain = robot.drivetrain;
@@ -28,9 +42,9 @@ public class PurePursuitCommand extends CommandBase {
     public static PIDFController xController = new PIDFController(xP, 0.0, xD, 0);
     public static PIDFController yController = new PIDFController(yP, 0.0, yD, 0);
     public static PIDFController hController = new PIDFController(hP, 0.0, hD, 0);
-    public static double ACCEL_LIMIT = 0.5;
+    public static double ACCEL_LIMIT = 1;
     public static double STABLE_MS = 250;
-    public static double MAX_TIME_MS = 5000;
+    public static double MAX_TIME_MS = 10000;
 
     public ArrayList<Vector2D> targetPoints;
     public double lookaheadRadius;
@@ -38,7 +52,7 @@ public class PurePursuitCommand extends CommandBase {
 
     private boolean finished = false;
 
-    public PurePursuitCommand(ArrayList<Vector2D> targetPoints, double lookaheadRadius, double finalHeading) {
+    public PurePursuitConstantCommand(ArrayList<Vector2D> targetPoints, double lookaheadRadius, double finalHeading) {
 
         this.targetPoints = targetPoints;
         this.lookaheadRadius = lookaheadRadius;
@@ -98,7 +112,7 @@ public class PurePursuitCommand extends CommandBase {
             if (currentTarget == targetPoints.size() - 1)
                 return new Pose(intersection, finalPose.heading);
             //add checking if flipping backwards is quicker than forwards
-            double heading = intersection.subt(robotPos).angle() - Math.PI/2;;
+            double heading = 0;
             return new Pose(intersection, heading);
 
         }

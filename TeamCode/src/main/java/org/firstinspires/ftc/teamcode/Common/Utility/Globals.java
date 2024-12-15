@@ -9,7 +9,7 @@ public class Globals {
     public static Color ALLIANCE = Color.BLUE;
 
     public static int intakeAlphaThreshold = 500;
-    public static int depositAlphaThreshold = 2000;
+    public static int depositAlphaThreshold = 1000;
 
     public static double ANGLE_SNAPPING_THRESHHOLD = Math.toRadians(30); // +- 30 degrees
 

@@ -5,28 +5,22 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
-import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitConstantCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.PickUpCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ScoreCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.DepositCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.ExtendoCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.LiftCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.dClawCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.iClawCommand;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Vector2D;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
@@ -35,15 +29,13 @@ import org.firstinspires.ftc.teamcode.Common.Subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.ArrayList;
-import java.util.List;
 
 
 @Config
-@Autonomous(name = "\uD83D\uDD35⇾ Blue Specimen Auto")
-public class blueSpecAuto extends CommandOpMode {
+@Autonomous(name = "\uD83D\uDD34⇾ Red Specimen Auto")
+public class redSpecAuto extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -54,7 +46,7 @@ public class blueSpecAuto extends CommandOpMode {
 
         CommandScheduler.getInstance().reset();
 
-        Globals.ALLIANCE = Color.BLUE;
+        Globals.ALLIANCE = Color.RED;
 
         robot.init(hardwareMap);
         robot.enabled = true;
