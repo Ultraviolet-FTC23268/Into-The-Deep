@@ -33,7 +33,7 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import java.util.ArrayList;
 
 
-@Config
+//@Config
 @Autonomous(name = "\uD83D\uDD34⇾ Red Specimen Auto")
 public class redSpecAuto extends CommandOpMode {
 
@@ -58,8 +58,13 @@ public class redSpecAuto extends CommandOpMode {
         robot.deposit.update(DepositSubsystem.DepositState.AUTO);
         robot.deposit.update(DepositSubsystem.ClawState.CLOSED);
 
-        while (!isStarted()) {
-            telemetry.addLine("auto in init");
+        while (opModeInInit()) {
+            //telemetry.update("auto in init");
+            try {
+                Thread.sleep(50L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
@@ -134,7 +139,7 @@ public class redSpecAuto extends CommandOpMode {
                                 new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
 
 
-                        new PurePursuitConstantCommand(pickUp1Path, 350, 0)
+                        /*new PurePursuitConstantCommand(pickUp1Path, 350, 0)
                                 .alongWith(new SequentialCommandGroup(new WaitCommand(800), new IntakeCommand(IntakeSubsystem.IntakeState.NEUTRAL))),
 
                         new HighSpecimenCommand()
@@ -171,7 +176,7 @@ public class redSpecAuto extends CommandOpMode {
                                 new WaitCommand(Globals.SPEC_SCORE_DELAY),
                                 new dClawCommand(DepositSubsystem.ClawState.OPEN),
                                 new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                                new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
+                                new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),*/
 
                         new PositionCommand(parkPose)
 

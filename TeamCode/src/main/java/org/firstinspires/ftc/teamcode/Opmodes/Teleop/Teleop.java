@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
-import com.arcrobotics.ftclib.command.ConditionalCommand;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
@@ -14,9 +13,9 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 
+import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSampleCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ScoreCommand;
@@ -49,12 +48,8 @@ public class Teleop extends CommandOpMode {
         robot.init(hardwareMap);
         robot.read();
 
-        robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
-        robot.intake.update(IntakeSubsystem.IntakeState.EXTENDED);
-        robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED);
-
         gamepadEx.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(() -> schedule(new HighSpecimenCommand()));
+                .whenPressed(() -> schedule(new AutoHighSpecimenCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.START)
                 .whenPressed(() -> schedule(new ManualSpecOverrideCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.A)
@@ -74,9 +69,18 @@ public class Teleop extends CommandOpMode {
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
 
         while (opModeInInit()) {
-            telemetry.addLine("Robot Initialized.");
-            telemetry.update();
+            //telemetry.update("auto in init");
+            try {
+                Thread.sleep(50L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+
+        robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
+        schedule(new SequentialCommandGroup(new WaitCommand(1000),
+                new InstantCommand(() -> robot.intake.update(IntakeSubsystem.IntakeState.EXTENDED)),
+                new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED))));
     }
 
 
@@ -87,6 +91,8 @@ public class Teleop extends CommandOpMode {
         robot.read();
         robot.update();
         robot.write();
+
+        robot.lift.retract = gamepadEx.getButton(GamepadKeys.Button.Y);
 
         robot.intake.touchpadValue = -gamepadEx.getRightY();
         robot.intake.leftShoulderInput = gamepadEx.getButton(GamepadKeys.Button.LEFT_BUMPER);

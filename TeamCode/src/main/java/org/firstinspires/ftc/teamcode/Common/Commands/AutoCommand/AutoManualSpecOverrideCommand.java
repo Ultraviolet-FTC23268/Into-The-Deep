@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand;
+package org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand;
 
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
@@ -14,18 +14,15 @@ import org.firstinspires.ftc.teamcode.Common.Subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
-public class ManualSpecOverrideCommand extends SequentialCommandGroup {
+public class AutoManualSpecOverrideCommand extends SequentialCommandGroup {
 
-    public ManualSpecOverrideCommand() {
+    public AutoManualSpecOverrideCommand() {
 
         super(
-            new dClawCommand(DepositSubsystem.ClawState.CLOSED),
-            new WaitCommand(Globals.CLAW_MOVE_DELAY),
-            new LiftCommand(LiftSubsystem.LiftState.PRE_HIGH_CHAMBER),
-            new DepositCommand(DepositSubsystem.DepositState.SPEC_DEPOSIT),
-                new WaitCommand(Globals.CLAW_MOVE_DELAY),
-            new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
-            new InstantCommand(() -> RobotHardware.getInstance().depositRead = false)
+                new LiftCommand(LiftSubsystem.LiftState.PRE_HIGH_CHAMBER),
+                new DepositCommand(DepositSubsystem.DepositState.SPEC_DEPOSIT)
+                //new WaitCommand(250)
+                //new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)
         );
 
     }

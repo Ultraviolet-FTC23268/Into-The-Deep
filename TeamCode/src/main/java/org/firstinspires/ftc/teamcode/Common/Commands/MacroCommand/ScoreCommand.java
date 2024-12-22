@@ -34,10 +34,11 @@ public class ScoreCommand extends SequentialCommandGroup {
             else if(deposit.depositState == DepositSubsystem.DepositState.SPEC_DEPOSIT)
                 addCommands(
                         new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
+                        new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
                         new WaitCommand(Globals.SPEC_SCORE_DELAY),
                         new dClawCommand(DepositSubsystem.ClawState.OPEN),
-                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED)
+                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
+                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL)
                 );
             else if(deposit.depositState == DepositSubsystem.DepositState.SPEC_INTAKE)
                 addCommands(

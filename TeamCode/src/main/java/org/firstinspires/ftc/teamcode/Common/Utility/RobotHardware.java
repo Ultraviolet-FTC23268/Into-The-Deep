@@ -157,7 +157,7 @@ public class RobotHardware {
         localizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         localizer.resetPosAndIMU();
 
-        depositClawColor = hardwareMap.get(RevColorSensorV3.class, "depositClawColor");
+        //depositClawColor = hardwareMap.get(RevColorSensorV3.class, "depositClawColor");
         intakeClawColor = hardwareMap.get(RevColorSensorV3.class, "intakeClawColor");
 
         drivetrain = new MecanumDrivetrain();

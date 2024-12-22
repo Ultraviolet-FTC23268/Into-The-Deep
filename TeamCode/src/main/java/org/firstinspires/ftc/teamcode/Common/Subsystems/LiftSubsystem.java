@@ -12,6 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.profile.AsymmetricMotionProfile;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.profile.ProfileConstraints;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.profile.ProfileState;
+import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.PDFLController;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -41,6 +42,7 @@ public class LiftSubsystem extends SubsystemBase {
 
     public double time = 0.0;
     public static boolean isUp = false;
+    public boolean retract = false;
 
     public static double P = 0.01;
     public static double D = 0.0002;
@@ -75,19 +77,19 @@ public class LiftSubsystem extends SubsystemBase {
         switch (state) {
 
             case RETRACTED:
-                setTargetPos(RETRACTED_POS);
+                setTargetPos(RETRACTED_POS+LIFT_OFFSET);
                 break;
             case LOW_BUCKET:
-                setTargetPos(LOW_BUCKET_POS);
+                setTargetPos(LOW_BUCKET_POS+LIFT_OFFSET);
                 break;
             case HIGH_BUCKET:
-                setTargetPos(HIGH_BUCKET_POS);
+                setTargetPos(HIGH_BUCKET_POS+LIFT_OFFSET);
                 break;
             case PRE_HIGH_CHAMBER:
-                setTargetPos(PRE_HIGH_CHAMBER_POS);
+                setTargetPos(PRE_HIGH_CHAMBER_POS+LIFT_OFFSET);
                 break;
             case HIGH_CHAMBER:
-                setTargetPos(HIGH_CHAMBER_POS);
+                setTargetPos(HIGH_CHAMBER_POS+LIFT_OFFSET);
                 break;
 
         }
@@ -110,6 +112,12 @@ public class LiftSubsystem extends SubsystemBase {
 
         if(withinTolerance)
             power = 0;
+
+        if(retract) {
+            power = -1;
+            Globals.LIFT_OFFSET = (int) getLeftPos();
+
+        }
 
         /*if(liftState == LiftState.RETRACTED && withinTolerance)
             home = true;

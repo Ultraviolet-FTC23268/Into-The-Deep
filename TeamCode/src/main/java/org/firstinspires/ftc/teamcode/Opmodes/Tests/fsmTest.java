@@ -33,7 +33,7 @@ public class fsmTest extends CommandOpMode {
     private double loopTime = 0.0;
 
     public static DepositSubsystem.DepositState dState = DepositSubsystem.DepositState.NEUTRAL;
-    public static IntakeSubsystem.IntakeState iState = IntakeSubsystem.IntakeState.INTAKE;
+    public static IntakeSubsystem.IntakeState iState = IntakeSubsystem.IntakeState.NEUTRAL;
 
     public static IntakeSubsystem.ClawState cState = IntakeSubsystem.ClawState.CLOSED;
     public static DepositSubsystem.ClawState c2State = DepositSubsystem.ClawState.CLOSED;
@@ -55,8 +55,8 @@ public class fsmTest extends CommandOpMode {
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
         robot.deposit.update(dState);
         schedule(new SequentialCommandGroup(new WaitCommand(1000),
-                new InstantCommand(() -> robot.intake.update(iState))));
-
+                new InstantCommand(() -> robot.intake.update(IntakeSubsystem.IntakeState.EXTENDED)),
+                new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED))));
 
     }
 
