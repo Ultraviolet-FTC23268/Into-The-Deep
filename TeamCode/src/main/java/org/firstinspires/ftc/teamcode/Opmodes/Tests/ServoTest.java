@@ -16,7 +16,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
-@Config
+//@Config
 @TeleOp(name = "Servo Test")
 @Disabled
 public class ServoTest extends CommandOpMode {
@@ -28,7 +28,7 @@ public class ServoTest extends CommandOpMode {
 
     private double loopTime = 0.0;
 
-    public static double clawPos = 0.2;
+    public static double clawPos = 0.5;
     public static double elbowPos = 0.94;
     public static double wristPos = 0.61;
     public static double armPos = 0.58;
@@ -76,18 +76,18 @@ public class ServoTest extends CommandOpMode {
 
         if(gamepadEx.getButton(GamepadKeys.Button.A)) {
 
-            robot.railServo.setPosition(railPos);
+            /*robot.railServo.setPosition(railPos);
             schedule(new WaitCommand(100));
             robot.depositArmServo.setPosition(dArmPos);
             schedule(new WaitCommand(100));
             robot.depositArm2Servo.setPosition(dArm2Pos);
             schedule(new WaitCommand(100));
             robot.depositElbowServo.setPosition(dElbowPos);
-            schedule(new WaitCommand(100));
+            schedule(new WaitCommand(100));*/
             robot.depositClawServo.setPosition(dClawPos);
             schedule(new WaitCommand(100));
 
-            robot.intakeClawServo.setPosition(clawPos);
+            /*robot.intakeClawServo.setPosition(clawPos);
             schedule(new WaitCommand(100));
             robot.intakeElbowServo.setPosition(elbowPos);
             schedule(new WaitCommand(100));
@@ -101,7 +101,7 @@ public class ServoTest extends CommandOpMode {
             robot.slideLeftServo.setPosition(leftSlidePos);
             schedule(new WaitCommand(100));
             robot.slideRightServo.setPosition(rightSlidePos);
-            schedule(new WaitCommand(100));
+            schedule(new WaitCommand(100));*/
 
         }
 

@@ -7,8 +7,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.Common.Utility.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
-import org.firstinspires.ftc.teamcode.Common.Vision.ClawAlignmentPipeline;
-import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.teamcode.Opmodes.Teleop.Teleop;
 
 @Config
 public class IntakeSubsystem extends SubsystemBase {
@@ -18,6 +17,8 @@ public class IntakeSubsystem extends SubsystemBase {
     public IntakeState intakeState = IntakeState.OVERVIEW;
     public ClawState clawState = ClawState.OPEN;
     public ExtendoState extendoState = ExtendoState.RETRACTED;
+
+    public double touchpadValue = 0;
 
     public static double wristNeutralPos = 0.61;
     public static double wristMinPos = 0.28;
@@ -45,7 +46,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double iArmTransferPos = 0.68;
     public static double iArmPostTransferPos = 0.8;
     public static double iArmExtendedPos = 0.85;
-    public static double iArmIntakePos = 0.91;
+    public static double iArmIntakePos = 0.89;
     public static double iArmOffset = 0;
     public static double iArmPickupPos = 0.94;
 
@@ -57,7 +58,12 @@ public class IntakeSubsystem extends SubsystemBase {
     private float[] hsvValues = new float[3];
     private int alpha = 0;
 
-    private int wristRotation = 0;
+    double servoAngle = wristNeutralPos;
+    public static double wristMultiplier = 0.005;
+    public static double extendoMultiplier = 0.0025;
+
+    public boolean leftShoulderInput;
+    public boolean rightShoulderInput;
 
     public enum IntakeState {
         NEUTRAL,
@@ -95,6 +101,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeArmServo.setPosition(iArmNeutralPos);
                 robot.intakeArm2Servo.setPosition(iArmNeutralPos + iArmOffset);
                 robot.intakeElbowServo.setPosition(elbowNeutralPos);
+                //robot.closeCamera();
                 break;
             case OVERVIEW:
                 update(ClawState.OPEN);
@@ -111,7 +118,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeArmServo.setPosition(iArmTransferPos);
                 robot.intakeArm2Servo.setPosition(iArmTransferPos + iArmOffset);
                 robot.intakeElbowServo.setPosition(elbowPreTransferPos);
-                robot.closeCamera();
+                //robot.closeCamera();
                 break;
             case TRANSFER:
                 update(ExtendoState.RETRACTED);
@@ -126,6 +133,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeArm2Servo.setPosition(iArmPostTransferPos + iArmOffset);
                 break;
             case EXTENDED:
+                //robot.startCamera();
                 pickupReady = false;
                 robot.intakeWristServo.setPosition(wristNeutralPos);
                 robot.intakeArmServo.setPosition(iArmExtendedPos);
@@ -138,7 +146,6 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeArm2Servo.setPosition(iArmIntakePos + iArmOffset);
                 robot.intakeElbowServo.setPosition(elbowIntakePos);
                 pickupReady = true;
-                robot.startCamera();
 
                 break;
             case PICK_UP:
@@ -256,8 +263,18 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public void loop() {
         if (intakeState == IntakeState.INTAKE) {
-        double servoAngle = Range.clip(wristNeutralPos - ((robot.alignmentPipeline.getSampleAngle() - 90)/300), wristMinPos, wristMaxPos);
-            robot.intakeWristServo.setPosition(servoAngle != wristMinPos ? servoAngle : wristNeutralPos);}
+            //double servoAngle = Range.clip(wristNeutralPos - ((robot.alignmentPipeline.getSampleAngle() - 90) / 300), wristMinPos, wristMaxPos);
+            //robot.intakeWristServo.setPosition(servoAngle != wristMaxPos ? servoAngle : wristNeutralPos);
+            if(leftShoulderInput) servoAngle += wristMultiplier;
+            else if(rightShoulderInput) servoAngle -= wristMultiplier;
+            servoAngle = Range.clip(servoAngle, wristMinPos, wristMaxPos);
+            robot.intakeWristServo.setPosition(servoAngle);
+
+            slideExtendedPos += touchpadValue * extendoMultiplier;
+            slideExtendedPos = Range.clip(slideExtendedPos, slideRetractedPos, maxExtension);
+            robot.slideLeftServo.setPosition(slideExtendedPos);
+            robot.slideRightServo.setPosition(slideExtendedPos + slideOffset);
+        }
     }
 
 }

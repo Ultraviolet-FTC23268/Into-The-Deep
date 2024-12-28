@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Opmodes.Autonomous;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
@@ -12,20 +11,17 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoManualSpecOverrideCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitConstantCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.PickUpCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ScoreCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.DepositCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.ExtendoCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.LiftCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.dClawCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.iClawCommand;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Vector2D;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
@@ -37,10 +33,9 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.ArrayList;
-import java.util.List;
 
 
-@Config
+//@Config
 @Autonomous(name = "\uD83D\uDD35⇾ Blue Specimen Auto")
 public class blueSpecAuto extends CommandOpMode {
 
@@ -62,97 +57,149 @@ public class blueSpecAuto extends CommandOpMode {
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
+        robot.deposit.update(DepositSubsystem.DepositState.AUTO);
+        robot.deposit.update(DepositSubsystem.ClawState.CLOSED);
 
-        while (!isStarted()) {
-            telemetry.addLine("auto in init");
+        while (opModeInInit()) {
+            try {
+                Thread.sleep(50L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if(isStopRequested())
+                break;
         }
-
+        //robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
 
-        Pose spec1ScorePos = new Pose(845, 50, 0);
-        Pose spec2ScorePos = new Pose(845, 100, 0);
-        Pose postScorePos = new Pose(400, 50, 0);
+        Pose spec1ScorePos = new Pose(660, -50, 0);
+        Pose spec2ScorePos = new Pose(675, 150, 0);
+        Pose spec3ScorePos = new Pose(675, 100, 0);
+        Pose spec4ScorePos = new Pose(675, 50, 0);
+        Pose spec5ScorePos = new Pose(675, 0, 0);
+
+        Pose postScorePos = new Pose(575, -675, 0);
+        Pose preScorePos = new Pose(575, -50, 0);
         Pose preIntakePos = new Pose(235, -750, 0);
-        Pose intakePos = new Pose(30, -750, 0);
+        Pose intakePos = new Pose(80, -750, 0);
+        Pose parkPose = new Pose(200, 250 ,0);
 
-        Pose samp1Drop = new Pose (450, -600, -Math.PI/2);
-        Pose samp2Pick = new Pose (480, -835, -0.75);
-        Pose samp2Drop = new Pose (480, -835, -Math.PI/2);
-        Pose samp3Pick = new Pose (515, -1025, -0.85);
-        Pose samp3Drop = new Pose (515, -1025, -Math.PI/2);
+        ArrayList<Vector2D> pushPath = new ArrayList<>();
+        pushPath.add(new Vector2D(575, -850));
+        pushPath.add(new Vector2D(1650, -675));
+        pushPath.add(new Vector2D(1650, -1000));
+        pushPath.add(new Vector2D(-50, -1000));
+        pushPath.add(new Vector2D(1650, -1000));
+        pushPath.add(new Vector2D(1650, -1240));
+        pushPath.add(new Vector2D(-50, -1240));
+        pushPath.add(new Vector2D(1650, -1240));
+        pushPath.add(new Vector2D(1650, -1400));
+        pushPath.add(new Vector2D(-50, -1400));
+        pushPath.add(new Vector2D(235, -750));
 
-        ArrayList<Vector2D> pickUpPath = new ArrayList<>();
-        pickUpPath.add(new Vector2D(350, 50));
-        pickUpPath.add(new Vector2D(450, -600));
-
-        ArrayList<Vector2D> intakePath = new ArrayList<>();
-        intakePath.add(new Vector2D(350, 50));
-        intakePath.add(new Vector2D(235, -750));
-
-        ArrayList<Vector2D> scorePath = new ArrayList<>();
-        scorePath.add(new Vector2D(350, 50));
-        scorePath.add(new Vector2D(845, 100));
+        ArrayList<Vector2D> parkPath = new ArrayList<>();
+        parkPath.add(new Vector2D(350, 50));
+        parkPath.add(new Vector2D(175, -750));
 
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(
 
+                        //Preload
+
                         new PositionCommand(spec1ScorePos)
-                                .alongWith(new SequentialCommandGroup(new WaitCommand(100),
-                                                                      new ManualSpecOverrideCommand())),
+                                .alongWith(new SequentialCommandGroup(new WaitCommand(350),
+                                                                      new AutoManualSpecOverrideCommand())),
+                        new WaitCommand(250),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
-                                new WaitCommand(Globals.SPEC_SCORE_DELAY),
-                                new dClawCommand(DepositSubsystem.ClawState.OPEN),
-                                new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                                new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
-                        new PositionCommand(postScorePos),
-                        new PurePursuitCommand(pickUpPath, 350, -0.7),
-                        new SequentialCommandGroup(
-                                new ExtendoCommand(IntakeSubsystem.ExtendoState.EXTENDED),
-                                new WaitCommand(Globals.EXTEND_DELAY),
-                                new IntakeCommand(IntakeSubsystem.IntakeState.INTAKE)),
-                        new SequentialCommandGroup(
-                                new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                                new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
-                                new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                                new IntakeCommand(IntakeSubsystem.IntakeState.INTAKE)),
-                        new PositionCommand(samp1Drop),
-                        new iClawCommand(IntakeSubsystem.ClawState.OPEN),
-                        new WaitCommand(Globals.CLAW_MOVE_DELAY),
+                                new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
+                                new WaitCommand(Globals.SPEC_SCORE_DELAY)),
 
-                        new PositionCommand(samp2Pick),
-                        new SequentialCommandGroup(
-                                new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                                new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
-                                new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                                new IntakeCommand(IntakeSubsystem.IntakeState.INTAKE)),
-                        new PositionCommand(samp2Drop),
-                        new iClawCommand(IntakeSubsystem.ClawState.OPEN),
-                        new WaitCommand(Globals.CLAW_MOVE_DELAY),
+                        //Push Samples
 
-                        new PositionCommand(samp3Pick),
-                        new SequentialCommandGroup(
-                                new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                                new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
-                                new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                                new IntakeCommand(IntakeSubsystem.IntakeState.INTAKE)),
-                        new PositionCommand(samp3Drop),
-                        new iClawCommand(IntakeSubsystem.ClawState.OPEN),
+                        new PurePursuitConstantCommand(pushPath, 500, 0)
+                                .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
+                                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
+                                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED))),
+
+                        //Spec 2
+
+                        new AutoHighSpecimenCommand()
+                                .alongWith(new PositionCommand(intakePos)),
+                        new dClawCommand(DepositSubsystem.ClawState.CLOSED),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
+                        new PositionCommand(preScorePos)
+                                .alongWith(new AutoManualSpecOverrideCommand()),
+                        new PositionCommand(spec2ScorePos),
+                        new SequentialCommandGroup( //manual score because this thing is stupid and dumb
+                                new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
+                                new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
+                                new WaitCommand(Globals.SPEC_SCORE_DELAY)),
+
+                        //Spec 3
 
                         new PositionCommand(preIntakePos)
-                                .alongWith(new SequentialCommandGroup(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
-                                        new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED))),
-                        new HighSpecimenCommand()
-                                .alongWith(new PositionCommand(intakePos)),
-                        new PurePursuitCommand(scorePath, 350, 0),
+                                .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
+                                           new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
+                                           new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
+                                           new AutoHighSpecimenCommand())),
+
+                        new PositionCommand(intakePos),
+                        new dClawCommand(DepositSubsystem.ClawState.CLOSED),
+                        new WaitCommand(Globals.CLAW_MOVE_DELAY),
+                        new PositionCommand(preScorePos)
+                                .alongWith(new AutoManualSpecOverrideCommand()),
+                        new PositionCommand(spec3ScorePos),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
-                                new WaitCommand(Globals.SPEC_SCORE_DELAY),
-                                new dClawCommand(DepositSubsystem.ClawState.OPEN),
-                                new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                                new LiftCommand(LiftSubsystem.LiftState.RETRACTED))
+                                new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
+                                new WaitCommand(Globals.SPEC_SCORE_DELAY)),
+
+                        //Spec 4
+
+                        new PositionCommand(preIntakePos)
+                                .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
+                                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
+                                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
+                                        new AutoHighSpecimenCommand())),
+
+                        new PositionCommand(intakePos),
+                        new dClawCommand(DepositSubsystem.ClawState.CLOSED),
+                        new WaitCommand(Globals.CLAW_MOVE_DELAY),
+                        new PositionCommand(preScorePos)
+                                .alongWith(new AutoManualSpecOverrideCommand()),
+                        new PositionCommand(spec4ScorePos),
+                        new SequentialCommandGroup( //manual score because this thing is stupid and dumb
+                                new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
+                                new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
+                                new WaitCommand(Globals.SPEC_SCORE_DELAY)),
+
+                        //Spec 5
+
+                        new PositionCommand(preIntakePos)
+                                .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
+                                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
+                                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
+                                        new AutoHighSpecimenCommand())),
+
+                        new PositionCommand(intakePos),
+                        new dClawCommand(DepositSubsystem.ClawState.CLOSED),
+                        new WaitCommand(Globals.CLAW_MOVE_DELAY),
+                        new PositionCommand(preScorePos)
+                                .alongWith(new AutoManualSpecOverrideCommand()),
+                        new PositionCommand(spec5ScorePos),
+                        new SequentialCommandGroup( //manual score because this thing is stupid and dumb
+                                new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
+                                new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
+                                new WaitCommand(Globals.SPEC_SCORE_DELAY)),
+
+                        //Park
+
+                        new PurePursuitCommand(parkPath, 500, Math.PI/2)
+                                .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
+                                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
+                                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED)))
+
 
                 )
         );

@@ -11,6 +11,7 @@ import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -21,7 +22,7 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 @Config
 @TeleOp(name = "FSM Test")
-//@Disabled
+@Disabled
 public class fsmTest extends CommandOpMode {
 
     private ElapsedTime timer;
@@ -32,7 +33,7 @@ public class fsmTest extends CommandOpMode {
     private double loopTime = 0.0;
 
     public static DepositSubsystem.DepositState dState = DepositSubsystem.DepositState.NEUTRAL;
-    public static IntakeSubsystem.IntakeState iState = IntakeSubsystem.IntakeState.INTAKE;
+    public static IntakeSubsystem.IntakeState iState = IntakeSubsystem.IntakeState.NEUTRAL;
 
     public static IntakeSubsystem.ClawState cState = IntakeSubsystem.ClawState.CLOSED;
     public static DepositSubsystem.ClawState c2State = DepositSubsystem.ClawState.CLOSED;
@@ -54,8 +55,8 @@ public class fsmTest extends CommandOpMode {
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
         robot.deposit.update(dState);
         schedule(new SequentialCommandGroup(new WaitCommand(1000),
-                new InstantCommand(() -> robot.intake.update(iState))));
-
+                new InstantCommand(() -> robot.intake.update(IntakeSubsystem.IntakeState.EXTENDED)),
+                new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED))));
 
     }
 

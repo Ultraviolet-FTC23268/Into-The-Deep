@@ -11,6 +11,7 @@ import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -24,7 +25,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 @Config
 @TeleOp(name = "Claw Auto Align Test")
-//@Disabled
+@Disabled
 public class ClawAutoAlignTest extends CommandOpMode {
 
     private ElapsedTime timer;
