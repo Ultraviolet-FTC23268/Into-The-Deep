@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.PickUpCommand
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ScoreCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.DepositCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.ExtendoCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.LiftCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.dClawCommand;
@@ -75,15 +76,15 @@ public class blueSpecAuto extends CommandOpMode {
         Pose preIntakePos = new Pose(235, -750, 0);
         Pose intakePos = new Pose(30, -750, 0);
 
-        Pose samp1Drop = new Pose (-450, 600, -Math.PI/2);
-        Pose samp2Pick = new Pose (-480, 835, -0.75);
-        Pose samp2Drop = new Pose (-480, 835, -Math.PI/2);
-        Pose samp3Pick = new Pose (-515, 1025, -0.85);
-        Pose samp3Drop = new Pose (-515, 1025, -Math.PI/2);
+        Pose samp1Drop = new Pose (450, -600, -Math.PI/2);
+        Pose samp2Pick = new Pose (480, -835, -0.75);
+        Pose samp2Drop = new Pose (480, -835, -Math.PI/2);
+        Pose samp3Pick = new Pose (515, -1025, -0.85);
+        Pose samp3Drop = new Pose (515, -1025, -Math.PI/2);
 
         ArrayList<Vector2D> pickUpPath = new ArrayList<>();
         pickUpPath.add(new Vector2D(350, 50));
-        pickUpPath.add(new Vector2D(-450, 600));
+        pickUpPath.add(new Vector2D(450, -600));
 
         ArrayList<Vector2D> intakePath = new ArrayList<>();
         intakePath.add(new Vector2D(350, 50));
@@ -107,7 +108,10 @@ public class blueSpecAuto extends CommandOpMode {
                                 new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
                         new PositionCommand(postScorePos),
                         new PurePursuitCommand(pickUpPath, 350, -0.7),
-                        new ExtendIntakeCommand(),
+                        new SequentialCommandGroup(
+                                new ExtendoCommand(IntakeSubsystem.ExtendoState.EXTENDED),
+                                new WaitCommand(Globals.EXTEND_DELAY),
+                                new IntakeCommand(IntakeSubsystem.IntakeState.INTAKE)),
                         new SequentialCommandGroup(
                                 new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
                                 new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
@@ -138,7 +142,8 @@ public class blueSpecAuto extends CommandOpMode {
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
 
                         new PositionCommand(preIntakePos)
-                                .alongWith(new RetractIntakeCommand()),
+                                .alongWith(new SequentialCommandGroup(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
+                                        new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED))),
                         new HighSpecimenCommand()
                                 .alongWith(new PositionCommand(intakePos)),
                         new PurePursuitCommand(scorePath, 350, 0),

@@ -9,7 +9,7 @@ import android.graphics.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 @TeleOp(name = "Color Sensor Test")
-//@Disabled
+@Disabled
 public class ColorSensorTest extends LinearOpMode {
 
     @Override
