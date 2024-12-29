@@ -27,10 +27,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSource {
     private final AtomicReference<Bitmap> lastFrame = new AtomicReference<>(Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_565));
+
     private double blockAngle = 0.0;
     private double avgAngle = 0;
+
     private double allianceColor = 0;
-    private List<Double> angles = new ArrayList<>();
+
+    private double estimatedAngle = 0.0;
+    private double processNoise = 1.0;
+    private double measurementNoise = 5.0;
+    private double errorCovariance = 1.0;
 
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
@@ -57,6 +63,7 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         Core.bitwise_or(redMask1, redMask2, redMask);
 
         Core.inRange(hsv, new Scalar(20, 100, 100), new Scalar(30, 255, 255), yellowMask);
+
         Core.inRange(hsv, new Scalar(100, 100, 50), new Scalar(140, 255, 255), blueMask);
 
         Mat combinedMask = new Mat();
@@ -114,6 +121,10 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
             }
         }
 
+        double kalmanGain = errorCovariance / (errorCovariance + measurementNoise);
+        estimatedAngle = estimatedAngle + kalmanGain * (blockAngle - estimatedAngle);
+        errorCovariance = (1 - kalmanGain) * errorCovariance + processNoise;
+
         hsv.release();
         redMask1.release();
         redMask2.release();
@@ -122,17 +133,6 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         combinedMask.release();
         kernel.release();
         hierarchy.release();
-
-        angles.add(blockAngle);
-        if (angles.size() == 100) {
-            double sum = 0;
-            for (double angle : angles) {
-                sum += angle;
-            }
-            avgAngle = sum / angles.size();
-            System.out.println("Average Angle: " + avgAngle);
-            angles.clear();
-        }
 
         return input;
     }
@@ -173,6 +173,7 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         }
 
         Point bottomPoint = new Point(p1.x, frameHeight);
+
         Imgproc.line(frame, bottomPoint, new Point(p1.x, 0), new Scalar(0, 255, 255), 2);
 
         double dx = p2.x - p1.x;
@@ -185,7 +186,7 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     }
 
     public double getSampleAngle() {
-        return avgAngle;
+        return estimatedAngle;
     }
 
     @Override
