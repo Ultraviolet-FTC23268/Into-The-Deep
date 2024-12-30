@@ -16,10 +16,7 @@ import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionComma
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitConstantCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSpecimenCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.DepositCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.LiftCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.dClawCommand;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
@@ -36,8 +33,8 @@ import java.util.ArrayList;
 
 
 //@Config
-@Autonomous(name = "\uD83D\uDD35⇾ Blue Specimen Auto")
-public class blueSpecAuto extends CommandOpMode {
+@Autonomous(name = "\uD83D\uDD35⇾ Specimen Auto")
+public class BlueSpecAuto extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -53,6 +50,7 @@ public class blueSpecAuto extends CommandOpMode {
         robot.init(hardwareMap);
         robot.enabled = true;
 
+        robot.localizer.resetPosAndIMU();
         robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, 0));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -72,16 +70,17 @@ public class blueSpecAuto extends CommandOpMode {
         //robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
 
-        Pose spec1ScorePos = new Pose(660, -50, 0);
-        Pose spec2ScorePos = new Pose(675, 150, 0);
-        Pose spec3ScorePos = new Pose(675, 100, 0);
-        Pose spec4ScorePos = new Pose(675, 50, 0);
-        Pose spec5ScorePos = new Pose(675, 0, 0);
+        Pose spec1ScorePos = new Pose(660, -75, 0);
+        Pose spec2ScorePos = new Pose(675, 225, 0);
+        Pose spec3ScorePos = new Pose(675, 150, 0);
+        Pose spec4ScorePos = new Pose(675, 75, 0);
+        Pose spec5ScorePos = new Pose(700, 0, 0);
 
         Pose postScorePos = new Pose(575, -675, 0);
         Pose preScorePos = new Pose(575, -50, 0);
         Pose preIntakePos = new Pose(235, -750, 0);
         Pose intakePos = new Pose(80, -750, 0);
+        Pose fIntakePos = new Pose(65, -750, 0);
         Pose parkPose = new Pose(200, 250 ,0);
 
         ArrayList<Vector2D> pushPath = new ArrayList<>();
@@ -93,13 +92,13 @@ public class blueSpecAuto extends CommandOpMode {
         pushPath.add(new Vector2D(1650, -1240));
         pushPath.add(new Vector2D(-50, -1240));
         pushPath.add(new Vector2D(1650, -1240));
-        pushPath.add(new Vector2D(1650, -1400));
-        pushPath.add(new Vector2D(-50, -1400));
+        pushPath.add(new Vector2D(1650, -1500));
+        pushPath.add(new Vector2D(-50, -1500));
         pushPath.add(new Vector2D(235, -750));
 
         ArrayList<Vector2D> parkPath = new ArrayList<>();
         parkPath.add(new Vector2D(350, 50));
-        parkPath.add(new Vector2D(175, -750));
+        parkPath.add(new Vector2D(100, -1000));
 
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(
@@ -107,9 +106,10 @@ public class blueSpecAuto extends CommandOpMode {
                         //Preload
 
                         new PositionCommand(spec1ScorePos)
-                                .alongWith(new SequentialCommandGroup(new WaitCommand(350),
-                                                                      new AutoManualSpecOverrideCommand())),
-                        new WaitCommand(250),
+                                .alongWith(new SequentialCommandGroup(new LiftCommand(LiftSubsystem.LiftState.PRE_HIGH_CHAMBER),
+                                                                      new WaitCommand(250),
+                                                                      new DepositCommand(DepositSubsystem.DepositState.SPEC_DEPOSIT))),
+                        //new WaitCommand(250),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
@@ -120,12 +120,12 @@ public class blueSpecAuto extends CommandOpMode {
                         new PurePursuitConstantCommand(pushPath, 500, 0)
                                 .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
                                         new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED))),
+                                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
+                                        new AutoHighSpecimenCommand())),
 
                         //Spec 2
 
-                        new AutoHighSpecimenCommand()
-                                .alongWith(new PositionCommand(intakePos)),
+                        new PositionCommand(fIntakePos),
                         new dClawCommand(DepositSubsystem.ClawState.CLOSED),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
                         new PositionCommand(preScorePos)
@@ -199,6 +199,8 @@ public class blueSpecAuto extends CommandOpMode {
                                 .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
                                         new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
                                         new LiftCommand(LiftSubsystem.LiftState.RETRACTED)))
+                                        //new InstantCommand(() -> RobotHardware.getInstance().intakeArmServo.setPosition(IntakeSubsystem.iArmNeutralPos+.1)),
+                                        //new InstantCommand(() -> RobotHardware.getInstance().intakeArmServo.setPosition(IntakeSubsystem.iArmNeutralPos+.1))))
 
 
                 )

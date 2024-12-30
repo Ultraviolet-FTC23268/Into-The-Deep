@@ -155,8 +155,6 @@ public class RobotHardware {
         localizer.setOffsets(-98.2, -171.651);
         localizer.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         localizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        localizer.resetPosAndIMU();
-
         //depositClawColor = hardwareMap.get(RevColorSensorV3.class, "depositClawColor");
         intakeClawColor = hardwareMap.get(RevColorSensorV3.class, "intakeClawColor");
 
@@ -180,10 +178,10 @@ public class RobotHardware {
 
     public void read() {
         lift.read();
-        if(depositRead)
-            deposit.read();
-        if(intakeRead)
-            intake.read();
+        if(depositRead);
+            //deposit.read();
+        if(intakeRead);
+            //intake.read();
 
     }
 

@@ -40,7 +40,7 @@ public class DepositSubsystem extends SubsystemBase {
     public static double dArmSampDepositPos = 0.55;
     public static double dArmSpecDepositPos = 0.1;
     public static double dArmSpecIntakePos = 0.81;
-    public static double dArmAutoPos = 0.24;
+    public static double dArmAutoPos = 0.2;
 
     public static double dArmOffset = 0;
 

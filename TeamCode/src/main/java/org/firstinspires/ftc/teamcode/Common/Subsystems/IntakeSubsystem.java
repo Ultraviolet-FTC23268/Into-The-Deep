@@ -48,7 +48,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double iArmExtendedPos = 0.85;
     public static double iArmIntakePos = 0.89;
     public static double iArmOffset = 0;
-    public static double iArmPickupPos = 0.94;
+    public static double iArmPickupPos = 0.95;
 
     private boolean pickupReady = false;
 
@@ -58,7 +58,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private float[] hsvValues = new float[3];
     private int alpha = 0;
 
-    double servoAngle = wristNeutralPos;
+    public double servoAngle = wristNeutralPos;
     public static double wristMultiplier = 0.005;
     public static double extendoMultiplier = 0.0025;
 

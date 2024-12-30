@@ -22,8 +22,8 @@ public class PurePursuitCommand extends CommandBase {
 
     private ElapsedTime timer;
     private ElapsedTime stable;
-    public static double ALLOWED_TRANSLATIONAL_ERROR = 10;
-    public static double ALLOWED_HEADING_ERROR = Math.toRadians(15);
+    public static double ALLOWED_TRANSLATIONAL_ERROR = 25;
+    public static double ALLOWED_HEADING_ERROR = Math.toRadians(10);
 
     public static PIDFController xController = new PIDFController(xP, 0.0, xD, 0);
     public static PIDFController yController = new PIDFController(yP, 0.0, yD, 0);
@@ -127,6 +127,9 @@ public class PurePursuitCommand extends CommandBase {
         if (targetPose.heading - robotPose.heading < -Math.PI)
             targetPose.heading += 2 * Math.PI;
 
+        if(targetPose.heading - robotPose.heading > Math.PI) targetPose.heading -= 2 * Math.PI;
+        if(targetPose.heading - robotPose.heading < -Math.PI) targetPose.heading += 2 * Math.PI;
+
         double xPower = xController.calculate(robotPose.x, targetPose.x);
         double yPower = yController.calculate(robotPose.y, targetPose.y);
         double hPower = -hController.calculate(robotPose.heading, targetPose.heading);
@@ -134,16 +137,12 @@ public class PurePursuitCommand extends CommandBase {
         double x_rotated = xPower * Math.cos(-robotPose.heading) - yPower * Math.sin(-robotPose.heading);
         double y_rotated = xPower * Math.sin(-robotPose.heading) + yPower * Math.cos(-robotPose.heading);
 
-        // Lower limit for power to counteract friction
-        if (Math.abs(x_rotated) < min_power)
-            x_rotated = Math.signum(x_rotated) * min_power;
-        if (Math.abs(y_rotated) < min_power)
-            y_rotated = Math.signum(y_rotated) * min_power;
-        if (Math.abs(hPower) < min_power_h)
-            hPower = Math.signum(hPower) * min_power;
+        if (Math.abs(x_rotated) < min_power) x_rotated = Math.signum(x_rotated) * min_power;
+        if (Math.abs(y_rotated) < min_power) y_rotated = Math.signum(y_rotated) * min_power;
+        if (Math.abs(hPower) < min_power_h) hPower = Math.signum(hPower) * min_power;
 
         // Feed forward to counteract friction
-        x_rotated += Math.signum(x_rotated) * k_static;
+        x_rotated += Math.signum(x_rotated) * k_static; // counteract friction
         y_rotated += Math.signum(y_rotated) * k_static;
         hPower += Math.signum(hPower) * k_static;
 

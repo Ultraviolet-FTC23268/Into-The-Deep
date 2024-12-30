@@ -38,7 +38,7 @@ public class HighSpecimenCommand extends SequentialCommandGroup {
         else
             addCommands(
                     new DepositCommand(DepositSubsystem.DepositState.SPEC_INTAKE),
-                    new WaitCommand(250),
+                    new WaitCommand(750),
                     new IntakeCommand(IntakeSubsystem.IntakeState.NEUTRAL),
                     new InstantCommand(() -> RobotHardware.getInstance().depositRead = false)
             );

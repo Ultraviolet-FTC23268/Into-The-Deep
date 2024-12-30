@@ -13,7 +13,11 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.AutomaticScoreCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSampleCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
@@ -64,8 +68,8 @@ public class Teleop extends CommandOpMode {
                 .whenPressed(() -> schedule(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
                 .whenPressed(() -> schedule(new iClawCommand(IntakeSubsystem.ClawState.OPEN)));
-
-
+        gamepadEx.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
+                .whenPressed(() -> schedule(new AutomaticScoreCommand()));
 
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
 
@@ -92,6 +96,9 @@ public class Teleop extends CommandOpMode {
         robot.read();
         robot.update();
         robot.write();
+
+        if(gamepad1.touchpad)
+            robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,80, -750, AngleUnit.RADIANS, 0));
 
         robot.lift.retract = gamepadEx.getButton(GamepadKeys.Button.Y);
 
