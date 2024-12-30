@@ -11,6 +11,8 @@ public class Globals {
     public static int intakeAlphaThreshold = 500;
     public static int depositAlphaThreshold = 100;
 
+    public static int specPose = 50;
+
     public static double ANGLE_SNAPPING_THRESHHOLD = Math.toRadians(30); // +- 30 degrees
 
     //LIFT POS

@@ -25,7 +25,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 @Config
 @TeleOp(name = "Claw Auto Align Test")
-@Disabled
+//@Disabled
 public class ClawAutoAlignTest extends CommandOpMode {
 
     private ElapsedTime timer;

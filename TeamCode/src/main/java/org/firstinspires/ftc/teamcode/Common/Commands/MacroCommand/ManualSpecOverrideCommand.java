@@ -24,7 +24,7 @@ public class ManualSpecOverrideCommand extends SequentialCommandGroup {
             new LiftCommand(LiftSubsystem.LiftState.PRE_HIGH_CHAMBER),
             new DepositCommand(DepositSubsystem.DepositState.SPEC_DEPOSIT),
                 new WaitCommand(Globals.CLAW_MOVE_DELAY),
-            new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
+            //new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
             new InstantCommand(() -> RobotHardware.getInstance().depositRead = false)
         );
 

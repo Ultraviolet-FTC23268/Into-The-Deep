@@ -29,7 +29,7 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     private final AtomicReference<Bitmap> lastFrame = new AtomicReference<>(Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_565));
 
     private double blockAngle = 0.0;
-    private double avgAngle = 0;
+    private double avgAngle = 90;
 
     private double allianceColor = 0;
 
@@ -125,6 +125,9 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         estimatedAngle = estimatedAngle + kalmanGain * (blockAngle - estimatedAngle);
         errorCovariance = (1 - kalmanGain) * errorCovariance + processNoise;
 
+        if(Math.abs(estimatedAngle - avgAngle) > 5)
+            avgAngle = estimatedAngle;
+
         hsv.release();
         redMask1.release();
         redMask2.release();
@@ -186,7 +189,7 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     }
 
     public double getSampleAngle() {
-        return estimatedAngle;
+        return avgAngle;
     }
 
     @Override
