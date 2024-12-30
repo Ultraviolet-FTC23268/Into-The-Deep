@@ -16,24 +16,26 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.core.Rect;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import org.opencv.core.Point;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSource {
     private final AtomicReference<Bitmap> lastFrame = new AtomicReference<>(Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_565));
-
     private double blockAngle = 0.0;
-    private double avgAngle = 0;
-
-    private double allianceColor = 0;
-
+    private double smoothedAngle = 0.0;
     private double estimatedAngle = 0.0;
+    private double allianceColor = 0;
+    private final List<Double> angleHistory = new ArrayList<>();
+    private final int historySize = 5;
+    private final double hysteresisThreshold = 5.0;
     private double processNoise = 1.0;
     private double measurementNoise = 5.0;
     private double errorCovariance = 1.0;
@@ -41,14 +43,11 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
         lastFrame.set(Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565));
-        if (Globals.ALLIANCE == Color.BLUE)
-            allianceColor = 0;
-        else
-            allianceColor = 1;
+        allianceColor = Globals.ALLIANCE == Color.BLUE ? 0 : 1;
     }
 
     @Override
-    public Mat processFrame(Mat input, long bruh) {
+    public Mat processFrame(Mat input, long timestamp) {
         Mat hsv = new Mat();
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
 
@@ -63,14 +62,14 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         Core.bitwise_or(redMask1, redMask2, redMask);
 
         Core.inRange(hsv, new Scalar(20, 100, 100), new Scalar(30, 255, 255), yellowMask);
-
         Core.inRange(hsv, new Scalar(100, 100, 50), new Scalar(140, 255, 255), blueMask);
 
         Mat combinedMask = new Mat();
-        if (allianceColor == 1)
+        if (allianceColor == 1) {
             Core.bitwise_or(redMask, yellowMask, combinedMask);
-        else
+        } else {
             Core.bitwise_or(blueMask, yellowMask, combinedMask);
+        }
 
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
         Imgproc.morphologyEx(combinedMask, combinedMask, Imgproc.MORPH_CLOSE, kernel);
@@ -79,10 +78,10 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         Mat hierarchy = new Mat();
         Imgproc.findContours(combinedMask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
-        int frameWidth = input.width();
-        int frameHeight = input.height();
         MatOfPoint closestContour = null;
         double minDistance = Double.MAX_VALUE;
+        int frameWidth = input.width();
+        int frameHeight = input.height();
 
         for (MatOfPoint contour : contours) {
             double area = Imgproc.contourArea(contour);
@@ -112,18 +111,28 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
             if (longestEdge[0] != null && longestEdge[1] != null) {
                 Point p1 = longestEdge[0];
                 Point p2 = longestEdge[1];
-
                 Imgproc.line(input, p1, p2, new Scalar(255, 0, 0), 2);
-
-                blockAngle = calculateEdgeAngle(p1, p2, frameHeight, input);
-                Imgproc.putText(input, String.format("Angle: %.2f", blockAngle), new Point(10, 30),
-                        Imgproc.FONT_HERSHEY_SIMPLEX, 1, new Scalar(255, 255, 255), 2);
+                blockAngle = calculateEdgeAngle(p1, p2, frameHeight);
             }
         }
 
-        double kalmanGain = errorCovariance / (errorCovariance + measurementNoise);
-        estimatedAngle = estimatedAngle + kalmanGain * (blockAngle - estimatedAngle);
-        errorCovariance = (1 - kalmanGain) * errorCovariance + processNoise;
+        angleHistory.add(blockAngle);
+        if (angleHistory.size() > historySize) {
+            angleHistory.remove(0);
+        }
+
+        List<Double> sortedAngles = new ArrayList<>(angleHistory);
+        Collections.sort(sortedAngles);
+        double medianAngle = sortedAngles.get(sortedAngles.size() / 2);
+
+        smoothedAngle = 0.9 * smoothedAngle + 0.1 * medianAngle;
+
+        if (Math.abs(blockAngle - smoothedAngle) > 30) {
+            blockAngle = smoothedAngle;
+        }
+        if (Math.abs(smoothedAngle - estimatedAngle) > hysteresisThreshold) {
+            estimatedAngle = smoothedAngle;
+        }
 
         hsv.release();
         redMask1.release();
@@ -138,62 +147,46 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     }
 
     private Point[] findLongestEdge(Point[] contour, int frameWidth, int frameHeight, int borderThreshold) {
-        double maxDistance = 0;
-        Point[] longestEdge = new Point[]{null, null};
+        Point[] longestEdge = {null, null};
+        double maxDistance = 0.0;
 
         for (int i = 0; i < contour.length; i++) {
             Point p1 = contour[i];
             Point p2 = contour[(i + 1) % contour.length];
-
-            boolean p1TooClose = (p1.x < borderThreshold || p1.x > frameWidth - borderThreshold ||
-                    p1.y < borderThreshold || p1.y > frameHeight - borderThreshold);
-
-            boolean p2TooClose = (p2.x < borderThreshold || p2.x > frameWidth - borderThreshold ||
-                    p2.y < borderThreshold || p2.y > frameHeight - borderThreshold);
-
-            if (p1TooClose && p2TooClose) continue;
-
             double distance = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 
-            if (distance > maxDistance) {
+            if (distance > maxDistance && p1.x > borderThreshold && p2.x > borderThreshold && p1.x < frameWidth - borderThreshold && p2.x < frameWidth - borderThreshold && p1.y > borderThreshold && p2.y > borderThreshold && p1.y < frameHeight - borderThreshold && p2.y < frameHeight - borderThreshold) {
                 maxDistance = distance;
                 longestEdge[0] = p1;
                 longestEdge[1] = p2;
             }
         }
-
         return longestEdge;
     }
 
-    private double calculateEdgeAngle(Point p1, Point p2, int frameHeight, Mat frame) {
-        if (p1.y > p2.y) {
-            Point temp = p1;
-            p1 = p2;
-            p2 = temp;
-        }
-
-        Point bottomPoint = new Point(p1.x, frameHeight);
-
-        Imgproc.line(frame, bottomPoint, new Point(p1.x, 0), new Scalar(0, 255, 255), 2);
-
+    private double calculateEdgeAngle(Point p1, Point p2, int frameHeight) {
         double dx = p2.x - p1.x;
         double dy = p2.y - p1.y;
-        double edgeAngleRadians = Math.atan2(dy, dx);
-        double edgeAngleDegrees = Math.toDegrees(edgeAngleRadians);
-        double relativeAngle = edgeAngleDegrees >= 0 ? edgeAngleDegrees : 180 + edgeAngleDegrees;
-
-        return relativeAngle;
-    }
-
-    public double getSampleAngle() {
-        return estimatedAngle;
+        return Math.toDegrees(Math.atan2(dy, dx));
     }
 
     @Override
-    public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {}
+    public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
+        Bitmap frame = lastFrame.get();
+        if (frame != null) {
+            canvas.drawBitmap(frame, null, new android.graphics.Rect(0, 0, onscreenWidth, onscreenHeight), null);
+        }
+
+        android.graphics.Paint textPaint = new android.graphics.Paint();
+        textPaint.setColor(android.graphics.Color.WHITE);
+        textPaint.setTextSize(30 * scaleCanvasDensity);
+        canvas.drawText(String.format("Estimated Angle: %.2f", estimatedAngle), 10, 50, textPaint);
+        canvas.drawText(String.format("Smoothed Angle: %.2f", smoothedAngle), 10, 90, textPaint);
+    }
 
     @Override
-    public void getFrameBitmap(Continuation<? extends Consumer<Bitmap>> continuation) {
-        continuation.dispatch(bitmapConsumer -> bitmapConsumer.accept(lastFrame.get()));
+    public void getFrameBitmap(@NonNull Continuation<? extends Consumer<Bitmap>> continuation) {
+        Bitmap frame = lastFrame.get();
+        continuation.dispatch(consumer -> consumer.accept(frame));
     }
 }
