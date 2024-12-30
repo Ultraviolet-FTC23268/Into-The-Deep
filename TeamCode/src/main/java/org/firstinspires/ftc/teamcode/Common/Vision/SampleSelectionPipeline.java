@@ -1,3 +1,6 @@
+//Currently just gets the data from the limelight and finds the centers of the bounding boxes.
+//DOES NOT DO ANY SELECTION
+
 package org.firstinspires.ftc.teamcode.Common.Vision;
 
 import com.qualcomm.hardware.limelightvision.Limelight3A;
