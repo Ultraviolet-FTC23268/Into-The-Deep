@@ -189,4 +189,8 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
         Bitmap frame = lastFrame.get();
         continuation.dispatch(consumer -> consumer.accept(frame));
     }
+
+    public double getSampleAngle() {
+        return estimatedAngle;
+    }
 }
