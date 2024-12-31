@@ -36,10 +36,17 @@ public class ClawAutoAlignTest extends CommandOpMode {
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
     private double loopTime = 0.0;
+    private double lastAngle = 0;
 
     public static double wristMinPos = 0.28;
     public static double wristMaxPos = 0.93;
     public static double wristNeutralPos = 0.61;
+
+    public static double minChange = 12.5;
+
+    private double servoAngle = wristNeutralPos;
+
+    private double currentAngle = 0;
 
 
     @Override
@@ -61,31 +68,41 @@ public class ClawAutoAlignTest extends CommandOpMode {
         robot.init(hardwareMap);
         robot.enabled = true;
 
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
+
+        FtcDashboard.getInstance().startCameraStream(alignmentPipeline, 30);
+
         robot.intake.update(IntakeSubsystem.IntakeState.INTAKE);
+        robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED);
         //robot.intakeWristServo.setPosition(wristNeutralPos);
     }
 
     @Override
     public void run() {
 
-        if(isStopRequested()){
+        if (isStopRequested()) {
             portal.close();
         }
+
+        currentAngle = alignmentPipeline.getSampleAngle();
+
+        CommandScheduler.getInstance().run();
 
         robot.clearBulkCache();
         robot.read();
         robot.update();
         robot.write();
 
-        telemetry.addData("Sample Angle ", alignmentPipeline.getSampleAngle());
+        telemetry.addData("Sample Angle ", currentAngle);
         telemetry.update();
 
-        double servoAngle = Range.clip(wristNeutralPos - ((alignmentPipeline.getSampleAngle() - 90)/300), wristMinPos, wristMaxPos);
+        if (Math.abs(lastAngle - currentAngle) > minChange){
+            servoAngle = Range.clip(wristNeutralPos - ((currentAngle - 90) / 300), wristMinPos, wristMaxPos);
+            robot.intakeWristServo.setPosition(servoAngle != wristMinPos ? servoAngle : wristNeutralPos);
+        }
 
-        robot.intakeWristServo.setPosition(servoAngle != wristMinPos ? servoAngle : wristNeutralPos);
 
-        CommandScheduler.getInstance().run();
-
+        lastAngle = currentAngle;
 
     }
 
