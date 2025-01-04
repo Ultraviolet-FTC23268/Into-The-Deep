@@ -37,14 +37,14 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     private double allianceColor = 0;
 
     public static double estimatedAngle = 0.0;
-    public static double processNoise = 0.75;
-    public static double measurementNoise = 50.0;
+    public static double processNoise = 3;
+    public static double measurementNoise = 150;
     public static double errorCovariance = 7.5;
 
     public static int historySize = 1;
     private final double hysteresisThreshold = 10.0;
     public static double alpha = 0.01;  // Low-pass filter smoothing factor
-    public static double minChange = 12.5;
+    public static double minChange = 7.5;
 
     private List<Double> angleHistory = new ArrayList<>();
     private double smoothedAngle = 0.0; // This should be a member variable

@@ -21,10 +21,10 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 public class AutomaticScoreCommand extends SequentialCommandGroup {
 
-    Pose preScorePos = new Pose(670, -125, 0);
+    Pose preScorePos = new Pose(670, 0, 0);
     Pose preIntakePos = new Pose(235, -750, 0);
     Pose intakePos = new Pose(60, -750, 0);
-    Pose specScorePos = new Pose(700, Globals.specPose, 0);
+    Pose specScorePos = new Pose(685, Globals.specPose, 0);
     Pose postPos = new Pose(500, Globals.specPose, 0);
 
     public AutomaticScoreCommand() {
@@ -40,17 +40,17 @@ public class AutomaticScoreCommand extends SequentialCommandGroup {
                 new WaitCommand(Globals.CLAW_MOVE_DELAY),
                 new PositionCommand(preScorePos)
                         .alongWith(new AutoManualSpecOverrideCommand()),
-                new PositionCommand(specScorePos),
-                new WaitCommand(500),
+                new PositionCommand(specScorePos)
+                /*new WaitCommand(150),
                 new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                         new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                         new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
                         new WaitCommand(Globals.SPEC_SCORE_DELAY)),
 
                 new PositionCommand(postPos)
-                    .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN),
-                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED)))
+                    .alongWith(new SequentialCommandGroup(new dClawCommand(DepositSubsystem.ClawState.OPEN)))
+                        //new DepositCommand(DepositSubsystem.DepositState.SPEC_DEPOSIT),
+                        //new LiftCommand(LiftSubsystem.LiftState.PRE_HIGH_CHAMBER)))*/
         );
 
     }

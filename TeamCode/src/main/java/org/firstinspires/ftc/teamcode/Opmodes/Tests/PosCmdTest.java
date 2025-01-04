@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 @Config
 @Autonomous(name = "Pos Command Test")
-//@Disabled
+@Disabled
 public class PosCmdTest extends CommandOpMode {
 
     private ElapsedTime timer;

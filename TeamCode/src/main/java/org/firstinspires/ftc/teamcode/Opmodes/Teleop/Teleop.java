@@ -52,6 +52,8 @@ public class Teleop extends CommandOpMode {
         robot.init(hardwareMap);
         robot.read();
 
+        Globals.AUTO = false;
+
         gamepadEx.getGamepadButton(GamepadKeys.Button.X)
                 .whenPressed(() -> schedule(new AutoHighSpecimenCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.START)
@@ -98,11 +100,13 @@ public class Teleop extends CommandOpMode {
         robot.write();
 
         if(gamepad1.touchpad)
-            robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,80, -750, AngleUnit.RADIANS, 0));
+            robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,60, -750, AngleUnit.RADIANS, 0));
 
         robot.lift.retract = gamepadEx.getButton(GamepadKeys.Button.Y);
 
         robot.intake.touchpadValue = -gamepadEx.getRightY();
+        if(gamepadEx.getButton(GamepadKeys.Button.LEFT_STICK_BUTTON))
+            robot.intake.autoWrist = !robot.intake.autoWrist;
         robot.intake.leftShoulderInput = gamepadEx.getButton(GamepadKeys.Button.LEFT_BUMPER);
         robot.intake.rightShoulderInput = gamepadEx.getButton(GamepadKeys.Button.RIGHT_BUMPER);
 
@@ -119,10 +123,8 @@ public class Teleop extends CommandOpMode {
 
         robot.drivetrain.set(new Pose(left_stick_y, left_stick_x, MathUtils.joystickScalar(gamepad1.right_trigger - gamepad1.left_trigger, 0.01)), 0);
 
-
         double loop = System.nanoTime();
         telemetry.addData("hz: ", 1000000000 / (loop - loopTime));
-        telemetry.addData("Sample Angle ", robot.alignmentPipeline.getSampleAngle());
         loopTime = loop;
         telemetry.update();
     }
