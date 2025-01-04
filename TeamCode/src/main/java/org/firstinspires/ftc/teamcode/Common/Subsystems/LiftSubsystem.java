@@ -114,8 +114,8 @@ public class LiftSubsystem extends SubsystemBase {
             power = 0;
 
         if(retract) {
-            power = -1;
-            Globals.LIFT_OFFSET = (int) getLeftPos();
+            power = -0.37;
+            Globals.LIFT_OFFSET = (int) getLeftPos() ;
 
         }
 
