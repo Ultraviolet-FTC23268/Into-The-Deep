@@ -35,8 +35,8 @@ import java.util.ArrayList;
 
 
 //@Config
-@Autonomous(name = "\uD83D\uDD35⇽ Sample Auto")
-public class BlueSampleAuto extends CommandOpMode {
+@Autonomous(name = "\uD83D\uDD34⇽ Sample Auto")
+public class RedSampleAuto extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -47,7 +47,7 @@ public class BlueSampleAuto extends CommandOpMode {
 
         CommandScheduler.getInstance().reset();
 
-        Globals.ALLIANCE = Color.BLUE;
+        Globals.ALLIANCE = Color.RED;
         Globals.AUTO = true;
 
         robot.init(hardwareMap);

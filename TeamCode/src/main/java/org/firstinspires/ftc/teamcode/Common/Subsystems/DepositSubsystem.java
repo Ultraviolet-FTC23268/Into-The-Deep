@@ -20,8 +20,8 @@ public class DepositSubsystem extends SubsystemBase {
 
     public ClawState clawState = ClawState.OPEN;
 
-    public static double dClawClosedPos = 0.61;
-    public static double dClawOpenPos = 0.23;
+    public static double dClawClosedPos = 0.42;
+    public static double dClawOpenPos = 0.09;
 
     public static double railRetractedPos = 0.41;
     public static double railSpecPos = 0.55;

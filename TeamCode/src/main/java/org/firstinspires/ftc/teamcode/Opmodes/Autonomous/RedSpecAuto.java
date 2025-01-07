@@ -11,11 +11,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoManualSpecOverrideCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitConstantCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.DepositCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.LiftCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.dClawCommand;
@@ -27,14 +28,13 @@ import org.firstinspires.ftc.teamcode.Common.Subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.ArrayList;
 
 
 //@Config
-@Autonomous(name = "\uD83D\uDD35⇾ Specimen Auto")
-public class BlueSpecAuto extends CommandOpMode {
+@Autonomous(name = "\uD83D\uDD34⇾ Specimen Auto")
+public class RedSpecAuto extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -45,7 +45,7 @@ public class BlueSpecAuto extends CommandOpMode {
 
         CommandScheduler.getInstance().reset();
 
-        Globals.ALLIANCE = Color.BLUE;
+        Globals.ALLIANCE = Color.RED;
         Globals.AUTO = true;
 
         robot.init(hardwareMap);
