@@ -27,13 +27,13 @@ public class DepositSubsystem extends SubsystemBase {
     public static double railSpecPos = 0.55;
     public static double railExtendedPos = 0.61;
 
-    public static double elbowNeutralPos = 0.08;
-    public static double elbowTransferPos = 0.29;
-    public static double elbowSampDepositPos = 0.47;
-    public static double elbowSpecScorePos = 0.42;
-    public static double elbowSpecDepositPos = 0.33;
-    public static double elbowSpecIntakePos = 0.33;
-    public static double elbowAutoPos = 0.35;
+    public static double elbowNeutralPos = 0.1;
+    public static double elbowTransferPos = 0.31;
+    public static double elbowSampDepositPos = 0.49;
+    public static double elbowSpecScorePos = 0.44;
+    public static double elbowSpecDepositPos = 0.35;
+    public static double elbowSpecIntakePos = 0.35;
+    public static double elbowAutoPos = 0.37;
 
     public static double dArmNeutralPos = 0.43;
     public static double dArmTransferPos = 0.17;

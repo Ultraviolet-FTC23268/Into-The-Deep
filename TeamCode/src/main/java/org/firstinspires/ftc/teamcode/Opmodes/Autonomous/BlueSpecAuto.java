@@ -71,17 +71,17 @@ public class BlueSpecAuto extends CommandOpMode {
         //robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
 
-        Pose spec1ScorePos = new Pose(660, -75, 0);
-        Pose spec2ScorePos = new Pose(675, 225, 0);
-        Pose spec3ScorePos = new Pose(675, 150, 0);
-        Pose spec4ScorePos = new Pose(675, 75, 0);
-        Pose spec5ScorePos = new Pose(700, 0, 0);
+        Pose spec1ScorePos = new Pose(630, -75, 0);
+        Pose spec2ScorePos = new Pose(660, 225, 0);
+        Pose spec3ScorePos = new Pose(660, 150, 0);
+        Pose spec4ScorePos = new Pose(660, 75, 0);
+        Pose spec5ScorePos = new Pose(660, 0, 0);
 
         Pose postScorePos = new Pose(575, -675, 0);
         Pose preScorePos = new Pose(575, -50, 0);
         Pose preIntakePos = new Pose(235, -750, 0);
         Pose intakePos = new Pose(80, -750, 0);
-        Pose fIntakePos = new Pose(65, -750, 0);
+        Pose fIntakePos = new Pose(55, -750, 0);
         Pose parkPose = new Pose(200, 250 ,0);
 
         ArrayList<Vector2D> pushPath = new ArrayList<>();
@@ -91,10 +91,11 @@ public class BlueSpecAuto extends CommandOpMode {
         pushPath.add(new Vector2D(-50, -1000));
         pushPath.add(new Vector2D(1650, -1000));
         pushPath.add(new Vector2D(1650, -1240));
+
         pushPath.add(new Vector2D(-50, -1240));
-        pushPath.add(new Vector2D(1650, -1240));
-        pushPath.add(new Vector2D(1650, -1500));
-        pushPath.add(new Vector2D(-50, -1500));
+        pushPath.add(new Vector2D(1750, -1240));
+        pushPath.add(new Vector2D(1750, -1390));
+        pushPath.add(new Vector2D(-50, -1390));
         pushPath.add(new Vector2D(235, -750));
 
         ArrayList<Vector2D> parkPath = new ArrayList<>();
