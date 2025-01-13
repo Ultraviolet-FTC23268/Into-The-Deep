@@ -19,13 +19,13 @@ public class Globals {
     public static int RETRACTED_POS = 0;
     public static int LOW_BUCKET_POS = 1600;
     public static int HIGH_BUCKET_POS = 4500;
-    public static int PRE_HIGH_CHAMBER_POS = 2500;
+    public static int PRE_HIGH_CHAMBER_POS = 2400;
     public static int HIGH_CHAMBER_POS = 3200;
     public static int LIFT_OFFSET = 0;
 
     public static int LIFT_ERROR_TOLERANCE = 0;
 
-    public static int CLAW_MOVE_DELAY = 400;
+    public static int CLAW_MOVE_DELAY = 250;
     public static int SPEC_SCORE_DELAY = 350;
     public static int TSETUP_DELAY = 250;
     public static int TSWAP_DELAY = 350;
