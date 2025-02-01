@@ -45,8 +45,8 @@ public class LiftSubsystem extends SubsystemBase {
     public boolean retract = false;
 
     public static double P = 0.01;
-    public static double D = 0.0002;
-    //public static double F = 0;
+    public static double D = 0.00015;
+    public static double F = 0;
 
     //public static double L = 0.08;
     //public static double Li = 0;
@@ -108,13 +108,13 @@ public class LiftSubsystem extends SubsystemBase {
 
         withinTolerance = Math.abs(getLeftPos() - getTargetPos()) < LIFT_ERROR_TOLERANCE;
 
-        power = Range.clip(libController.calculate(getLeftPos(), getTargetPos()), -1, 1);
+        power = Range.clip(libController.calculate(getLeftPos(), getTargetPos()) + F, -1, 1);
 
         if(withinTolerance)
             power = 0;
 
         if(retract) {
-            power = -0.37;
+            power = -0.25;
             Globals.LIFT_OFFSET = (int) getLeftPos() ;
 
         }

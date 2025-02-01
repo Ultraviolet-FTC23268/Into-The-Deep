@@ -13,6 +13,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
@@ -20,7 +23,7 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 @Config
 @Autonomous(name = "Pos Command Test")
-@Disabled
+//@Disabled
 public class PosCmdTest extends CommandOpMode {
 
     private ElapsedTime timer;
@@ -56,6 +59,7 @@ public class PosCmdTest extends CommandOpMode {
 
         testPos = new Pose(posX, posY, posH);
         testPos2 = new Pose(posX2, posY2, posH2);
+        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, -Math.PI/2));
 
         while (!isStarted()) {
             robot.read();
@@ -65,7 +69,6 @@ public class PosCmdTest extends CommandOpMode {
             robot.write();
         }
 
-        // robot.localizer.setPoseEstimate(new Pose2d(0, 0, 0)); // not neccessary anymore because version 1.0 automatically sets the pose to 0,0,0 when update is called for the first time
         timer = new ElapsedTime();
 
         CommandScheduler.getInstance().schedule(

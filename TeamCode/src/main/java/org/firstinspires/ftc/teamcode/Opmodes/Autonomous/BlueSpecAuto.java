@@ -52,7 +52,7 @@ public class BlueSpecAuto extends CommandOpMode {
         robot.enabled = true;
 
         robot.localizer.resetPosAndIMU();
-        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, 0));
+        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,25, 0, AngleUnit.RADIANS, 0));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -71,21 +71,21 @@ public class BlueSpecAuto extends CommandOpMode {
         //robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
 
-        Pose spec1ScorePos = new Pose(660, -75, 0);
-        Pose spec2ScorePos = new Pose(675, 225, 0);
-        Pose spec3ScorePos = new Pose(675, 150, 0);
-        Pose spec4ScorePos = new Pose(675, 75, 0);
-        Pose spec5ScorePos = new Pose(700, 0, 0);
+        Pose spec1ScorePos = new Pose(627, -75, 0);
+        Pose spec2ScorePos = new Pose(657, 225, 0);
+        Pose spec3ScorePos = new Pose(655, 150, 0);
+        Pose spec4ScorePos = new Pose(655, 75, 0);
+        Pose spec5ScorePos = new Pose(675, 0, 0);
 
         Pose postScorePos = new Pose(575, -675, 0);
         Pose preScorePos = new Pose(575, -50, 0);
         Pose preIntakePos = new Pose(235, -750, 0);
-        Pose intakePos = new Pose(80, -750, 0);
-        Pose fIntakePos = new Pose(65, -750, 0);
+        Pose intakePos = new Pose(75, -750, 0);
+        Pose fIntakePos = new Pose(50, -750, 0);
         Pose parkPose = new Pose(200, 250 ,0);
 
         ArrayList<Vector2D> pushPath = new ArrayList<>();
-        pushPath.add(new Vector2D(575, -850));
+        pushPath.add(new Vector2D(550, -850));
         pushPath.add(new Vector2D(1650, -675));
         pushPath.add(new Vector2D(1650, -1000));
         pushPath.add(new Vector2D(-50, -1000));
@@ -93,8 +93,8 @@ public class BlueSpecAuto extends CommandOpMode {
         pushPath.add(new Vector2D(1650, -1240));
         pushPath.add(new Vector2D(-50, -1240));
         pushPath.add(new Vector2D(1650, -1240));
-        pushPath.add(new Vector2D(1650, -1500));
-        pushPath.add(new Vector2D(-50, -1500));
+        pushPath.add(new Vector2D(1650, -1425));
+        pushPath.add(new Vector2D(-50, -1425));
         pushPath.add(new Vector2D(235, -750));
 
         ArrayList<Vector2D> parkPath = new ArrayList<>();
@@ -218,7 +218,8 @@ public class BlueSpecAuto extends CommandOpMode {
         robot.write();
 
         double loop = System.nanoTime();
-        telemetry.addData("hz ", 1000000000 / (loop - loopTime));
+        telemetry.addData("hz: ", 1000000000 / (loop - loopTime));
+        telemetry.addData("WS: ", robot.drivetrain.toString());
         loopTime = loop;
         telemetry.update();
 

@@ -29,7 +29,10 @@ public class ScoreCommand extends SequentialCommandGroup {
                         new dClawCommand(DepositSubsystem.ClawState.OPEN),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
                         new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED)
+                        new WaitCommand(500),
+                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
+                        new WaitCommand(Globals.CLAW_MOVE_DELAY),
+                        new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)
                 );
             else if(deposit.depositState == DepositSubsystem.DepositState.SPEC_DEPOSIT)
                 addCommands(
@@ -49,13 +52,9 @@ public class ScoreCommand extends SequentialCommandGroup {
                         new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
                         new IntakeCommand(IntakeSubsystem.IntakeState.NEUTRAL)
                 );
-            else if(intake.intakeState == IntakeSubsystem.IntakeState.EXTENDED && intake.extendoState == IntakeSubsystem.ExtendoState.TRANSFER)
-                addCommands(
-                        new TransferCommand()
-                );
             else if(intake.intakeState == IntakeSubsystem.IntakeState.EXTENDED && intake.extendoState == IntakeSubsystem.ExtendoState.RETRACTED)
                 addCommands(
-                        new IntakeCommand(IntakeSubsystem.IntakeState.NEUTRAL)
+                        new TransferCommand()
                 );
             else if(intake.intakeState == IntakeSubsystem.IntakeState.INTAKE)
                 addCommands(

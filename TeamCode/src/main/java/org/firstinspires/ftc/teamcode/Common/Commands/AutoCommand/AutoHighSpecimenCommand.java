@@ -4,6 +4,7 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.DepositCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
@@ -14,8 +15,11 @@ public class AutoHighSpecimenCommand extends SequentialCommandGroup {
 
     public AutoHighSpecimenCommand() {
 
+        if (RobotHardware.getInstance().deposit.depositState == DepositSubsystem.DepositState.SPEC_INTAKE) {
+            addCommands(new ManualSpecOverrideCommand());
+        } else
             addCommands(
-                new DepositCommand(DepositSubsystem.DepositState.SPEC_INTAKE),
+                    new DepositCommand(DepositSubsystem.DepositState.SPEC_INTAKE),
                     new WaitCommand(250),
                     new IntakeCommand(IntakeSubsystem.IntakeState.NEUTRAL)
             );
