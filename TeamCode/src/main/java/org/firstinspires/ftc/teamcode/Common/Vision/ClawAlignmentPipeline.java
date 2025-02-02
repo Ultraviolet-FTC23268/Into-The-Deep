@@ -2,11 +2,8 @@ package org.firstinspires.ftc.teamcode.Common.Vision;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-
 import androidx.annotation.NonNull;
-
 import com.acmerobotics.dashboard.config.Config;
-
 import org.firstinspires.ftc.robotcore.external.function.Consumer;
 import org.firstinspires.ftc.robotcore.external.function.Continuation;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
@@ -33,22 +30,23 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
 
     private double blockAngle = 0.0;
     private double avgAngle = 0;
-
     private double allianceColor = 0;
 
     public static double estimatedAngle = 0.0;
     public static double processNoise = 3;
     public static double measurementNoise = 150;
     public static double errorCovariance = 7.5;
-
     public static int historySize = 1;
     private final double hysteresisThreshold = 10.0;
-    public static double alpha = 0.01;  // Low-pass filter smoothing factor
+    public static double alpha = 0.01;
     public static double minChange = 7.5;
 
     private List<Double> angleHistory = new ArrayList<>();
-    private double smoothedAngle = 0.0; // This should be a member variable
+    private double smoothedAngle = 0.0;
     private double finalAngle = 90;
+
+    private static final int SKIP_FRAME_INTERVAL = 3; // Process every nth frame
+    private int frameCounter = 0;
 
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
@@ -93,10 +91,10 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
 
         int frameWidth = input.width();
         int frameHeight = input.height();
-        MatOfPoint closestContour = null;
-        double minDistance = Double.MAX_VALUE;
+        final double[] minDistance = {Double.MAX_VALUE}; // Making minDistance final
+        final MatOfPoint[] closestContour = {null}; // Making closestContour final
 
-        for (MatOfPoint contour : contours) {
+        contours.parallelStream().forEach(contour -> {
             double area = Imgproc.contourArea(contour);
             if (area > 1500) {
                 Rect boundingRect = Imgproc.boundingRect(contour);
@@ -104,15 +102,17 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
                 int blockCenterY = boundingRect.y + boundingRect.height / 2;
                 double distance = Math.sqrt(Math.pow(blockCenterX - frameWidth / 2, 2) + Math.pow(blockCenterY - frameHeight / 2, 2));
 
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestContour = contour;
+                synchronized (minDistance) {
+                    if (distance < minDistance[0]) {
+                        minDistance[0] = distance;
+                        closestContour[0] = contour;
+                    }
                 }
             }
-        }
+        });
 
-        if (closestContour != null) {
-            MatOfPoint2f contour2f = new MatOfPoint2f(closestContour.toArray());
+        if (closestContour[0] != null) {
+            MatOfPoint2f contour2f = new MatOfPoint2f(closestContour[0].toArray());
             double epsilon = 0.02 * Imgproc.arcLength(contour2f, true);
             MatOfPoint2f simplifiedContour = new MatOfPoint2f();
             Imgproc.approxPolyDP(contour2f, simplifiedContour, epsilon, true);
@@ -145,7 +145,7 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
 
         smoothedAngle = applyLowPassFilter(avgAngle);
 
-        if(Math.abs(finalAngle - avgAngle) > minChange)
+        if (Math.abs(finalAngle - avgAngle) > minChange)
             finalAngle = avgAngle;
 
         hsv.release();
