@@ -36,6 +36,14 @@ import java.util.ArrayList;
 @Autonomous(name = "\uD83D\uDD35⇾ Specimen Auto")
 public class BlueSpecAuto extends CommandOpMode {
 
+    //CHANGE THIS TO LASER POINTER VALUE
+    private final double subDistance = 880;
+
+    //DO NOT CHANGE
+    private final double defaultDistance = 940;
+    private final double dOffset = subDistance - defaultDistance;
+    private final double scorePosition = 625 + dOffset;
+
     private final RobotHardware robot = RobotHardware.getInstance();
 
     private double loopTime = 0.0;
@@ -71,21 +79,19 @@ public class BlueSpecAuto extends CommandOpMode {
         //robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
 
-        Pose spec1ScorePos = new Pose(627, -75, 0);
-        Pose spec2ScorePos = new Pose(657, 225, 0);
-        Pose spec3ScorePos = new Pose(655, 150, 0);
-        Pose spec4ScorePos = new Pose(655, 75, 0);
-        Pose spec5ScorePos = new Pose(675, 0, 0);
+        Pose spec1ScorePos = new Pose(scorePosition, -75, 0);
+        Pose spec2ScorePos = new Pose(scorePosition+30, 225, 0);
+        Pose spec3ScorePos = new Pose(scorePosition+30, 150, 0);
+        Pose spec4ScorePos = new Pose(scorePosition+30, 75, 0);
+        Pose spec5ScorePos = new Pose(scorePosition+50, 0, 0);
 
-        Pose postScorePos = new Pose(575, -675, 0);
-        Pose preScorePos = new Pose(575, -50, 0);
+        Pose preScorePos = new Pose(575 + dOffset, -50, 0);
         Pose preIntakePos = new Pose(235, -750, 0);
         Pose intakePos = new Pose(75, -750, 0);
         Pose fIntakePos = new Pose(50, -750, 0);
-        Pose parkPose = new Pose(200, 250 ,0);
 
         ArrayList<Vector2D> pushPath = new ArrayList<>();
-        pushPath.add(new Vector2D(550, -850));
+        pushPath.add(new Vector2D(550 + dOffset, -850));
         pushPath.add(new Vector2D(1650, -675));
         pushPath.add(new Vector2D(1650, -1000));
         pushPath.add(new Vector2D(-50, -1000));
@@ -98,8 +104,8 @@ public class BlueSpecAuto extends CommandOpMode {
         pushPath.add(new Vector2D(235, -750));
 
         ArrayList<Vector2D> parkPath = new ArrayList<>();
-        parkPath.add(new Vector2D(350, 50));
-        parkPath.add(new Vector2D(100, -1000));
+        parkPath.add(new Vector2D(350 + dOffset, 50));
+        parkPath.add(new Vector2D(100 + dOffset, -1000));
 
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(

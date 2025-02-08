@@ -21,9 +21,9 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 public class AutomaticScoreCommand extends SequentialCommandGroup {
 
-    Pose preScorePos = new Pose(660, 0, 0);
     Pose preIntakePos = new Pose(235, -750, 0);
     Pose intakePos = new Pose(60, -750, 0);
+    Pose preScorePos = new Pose(670, 0, 0);
     Pose specScorePos = new Pose(680, Globals.specPose, 0);
     //Pose postPos = new Pose(500, Globals.specPose, 0);
 

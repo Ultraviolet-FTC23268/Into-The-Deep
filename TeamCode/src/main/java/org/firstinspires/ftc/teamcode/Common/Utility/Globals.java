@@ -11,7 +11,7 @@ public class Globals {
     public static int intakeAlphaThreshold = 500;
     public static int depositAlphaThreshold = 100;
 
-    public static int specPose = 150;
+    public static int specPose = 125;
 
     public static double ANGLE_SNAPPING_THRESHHOLD = Math.toRadians(30); // +- 30 degrees
 
@@ -26,7 +26,7 @@ public class Globals {
     public static int LIFT_ERROR_TOLERANCE = 0;
 
     public static int CLAW_MOVE_DELAY = 150;
-    public static int SPEC_SCORE_DELAY = 300;
+    public static int SPEC_SCORE_DELAY = 375;
     public static int TSETUP_DELAY = 250;
     public static int TSWAP_DELAY = 350;
     public static int TPLACE_DELAY = 250;

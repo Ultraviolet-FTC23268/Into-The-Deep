@@ -20,7 +20,7 @@ public class DepositSubsystem extends SubsystemBase {
 
     public ClawState clawState = ClawState.OPEN;
 
-    public static double dClawClosedPos = 0.44;
+    public static double dClawClosedPos = 0.46;
     public static double dClawOpenPos = 0.09;
 
     public static double railRetractedPos = 0.41;
@@ -28,9 +28,9 @@ public class DepositSubsystem extends SubsystemBase {
     public static double railExtendedPos = 0.61;
 
     public static double elbowNeutralPos = 0.08;
-    public static double elbowTransferPos = 0.39;
+    public static double elbowTransferPos = 0.42;
     public static double elbowSampDepositPos = 0.47;
-    public static double elbowSpecScorePos = 0.42;
+    public static double elbowSpecScorePos = 0.47;
     public static double elbowSpecDepositPos = 0.35;
     public static double elbowSpecIntakePos = 0.35;
     public static double elbowAutoPos = 0.35;

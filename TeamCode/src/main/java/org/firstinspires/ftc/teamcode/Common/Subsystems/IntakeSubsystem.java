@@ -29,7 +29,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double wristMinus45Pos = 0.45;
     public static double wristPlus45Pos = 0.77;
 
-    public static double iClawClosedPos = 0.41;
+    public static double iClawClosedPos = 0.43;
     public static double iClawOpenPos = 0.2;
     public static double iClawLoosePos = 0.38;
 
@@ -46,14 +46,14 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double elbowIntakePos = 0.22;
     public static double elbowPickupPos = 0.23;
 
-    public static double iArmOverviewPos = 0.7;
-    public static double iArmNeutralPos = 0.44;
-    public static double iArmTransferPos = 0.72;
-    public static double iArmPostTransferPos = 0.8;
-    public static double iArmExtendedPos = 0.86;
-    public static double iArmIntakePos = 0.92;
+    public static double iArmOverviewPos = 0.63;
+    public static double iArmNeutralPos = 0.37;
+    public static double iArmTransferPos = 0.65;
+    public static double iArmPostTransferPos = 0.73;
+    public static double iArmExtendedPos = 0.79;
+    public static double iArmIntakePos = 0.85;
     public static double iArmOffset = 0;
-    public static double iArmPickupPos = 0.99;
+    public static double iArmPickupPos = 0.95;
 
     private boolean pickupReady = false;
 
