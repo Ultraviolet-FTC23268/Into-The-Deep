@@ -18,9 +18,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.AutomaticScoreCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ClimbUpCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSampleCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ReadyIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ScoreCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
@@ -57,21 +59,25 @@ public class Teleop extends CommandOpMode {
         gamepadEx.getGamepadButton(GamepadKeys.Button.X)
                 .whenPressed(() -> schedule(new AutoHighSpecimenCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.START)
-                .whenPressed(() -> schedule(new ManualSpecOverrideCommand()));
+                .whenPressed(() -> schedule(new iClawCommand(IntakeSubsystem.ClawState.OPEN)));
         gamepadEx.getGamepadButton(GamepadKeys.Button.A)
                 .whenPressed(() -> schedule(new HighSampleCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.B)
                 .whenPressed(() -> schedule(new ScoreCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(() -> schedule(new ExtendIntakeCommand()));
+                .whenPressed(() -> schedule(new ClimbUpCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(() -> schedule(new RetractIntakeCommand()));
+                .whenPressed(() -> schedule(new InstantCommand(() -> robot.lift.setTargetPos(1500))));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(() -> schedule(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)));
+                .whenPressed(() -> schedule(new ReadyIntakeCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(() -> schedule(new iClawCommand(IntakeSubsystem.ClawState.OPEN)));
+                .whenPressed(() -> schedule());
         gamepadEx.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
                 .whenPressed(() -> schedule(new AutomaticScoreCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(() -> schedule(new InstantCommand(() -> robot.intake.changeWristPos(1))));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(() -> schedule(new InstantCommand(() -> robot.intake.changeWristPos(-1))));
 
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry());
 
@@ -103,12 +109,15 @@ public class Teleop extends CommandOpMode {
             robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,60, -750, AngleUnit.RADIANS, 0));
 
         robot.lift.retract = gamepadEx.getButton(GamepadKeys.Button.Y);
+        robot.intake.stickValue = -gamepadEx.getRightY();
 
-        robot.intake.touchpadValue = -gamepadEx.getRightY();
+        if(gamepadEx.getRightX() >= 0.92)
+            schedule(new ExtendIntakeCommand());
+        else if(gamepadEx.getRightX() <= -0.92)
+            schedule(new RetractIntakeCommand());
+
         if(gamepadEx.getButton(GamepadKeys.Button.LEFT_STICK_BUTTON))
             robot.intake.autoWrist = !robot.intake.autoWrist;
-        robot.intake.leftShoulderInput = gamepadEx.getButton(GamepadKeys.Button.LEFT_BUMPER);
-        robot.intake.rightShoulderInput = gamepadEx.getButton(GamepadKeys.Button.RIGHT_BUMPER);
 
         double left_stick_y = -gamepad1.left_stick_y,
                 left_stick_x = -gamepad1.left_stick_x;
@@ -125,6 +134,8 @@ public class Teleop extends CommandOpMode {
 
         double loop = System.nanoTime();
         telemetry.addData("hz: ", 1000000000 / (loop - loopTime));
+        telemetry.addData("lift: ", robot.lift.getLeftPos());
+        telemetry.addData("target: ", robot.lift.getTargetPos());
         loopTime = loop;
         telemetry.update();
     }

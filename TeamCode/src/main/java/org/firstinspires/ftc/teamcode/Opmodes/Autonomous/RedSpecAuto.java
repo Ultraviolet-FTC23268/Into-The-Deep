@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -31,7 +32,7 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 
 import java.util.ArrayList;
 
-
+@Disabled
 //@Config
 @Autonomous(name = "\uD83D\uDD34⇾ Specimen Auto")
 public class RedSpecAuto extends CommandOpMode {

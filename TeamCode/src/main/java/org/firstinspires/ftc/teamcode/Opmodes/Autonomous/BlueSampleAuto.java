@@ -53,7 +53,7 @@ public class BlueSampleAuto extends CommandOpMode {
         robot.init(hardwareMap);
         robot.enabled = true;
 
-        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, 0));
+        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, -Math.PI/2));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -73,30 +73,23 @@ public class BlueSampleAuto extends CommandOpMode {
         robot.intake.update(IntakeSubsystem.IntakeState.EXTENDED);
         robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED);
 
-        Pose scorePos = new Pose(200, 1050, -Math.PI/4);
-        Pose samp2Pos = new Pose(250, 1000, -0.24);
-        Pose samp3Pos = new Pose(210, 1070, 0);
-        Pose samp4Pos = new Pose(260, 1040, 0.36);
-
-        ArrayList<Vector2D> preloadPath = new ArrayList<>();
-        preloadPath.add(new Vector2D(600, 500));
-        preloadPath.add(new Vector2D(350, 800));
+        Pose scorePos = new Pose(140, 590, -Math.PI/4);
+        Pose samp2Pos = new Pose(600, 390, 0);
+        Pose samp3Pos = new Pose(600, 650, 0);
+        Pose samp4Pos = new Pose(660, 690, 0.53);
 
         ArrayList<Vector2D> parkPath = new ArrayList<>();
-        parkPath.add(new Vector2D(1500, 800));
-        parkPath.add(new Vector2D(1400, 200));
+        parkPath.add(new Vector2D(1500, 500));
+        parkPath.add(new Vector2D(1350, -240));
 
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(
 
                         //Preload
-
-                        new PurePursuitCommand(preloadPath, 500, -Math.PI/4)
-                                .alongWith(new SequentialCommandGroup(
-                                        new LiftCommand(LiftSubsystem.LiftState.HIGH_BUCKET),
-                                        new DepositCommand(DepositSubsystem.DepositState.SAMP_DEPOSIT))),
+                        new LiftCommand(LiftSubsystem.LiftState.HIGH_BUCKET),
+                        new DepositCommand(DepositSubsystem.DepositState.SAMP_DEPOSIT),
+                        new PositionCommand(new Pose(250, 500, -Math.PI/4)),
                         new PositionCommand(scorePos),
-                        new WaitCommand(250),
 
                         new SequentialCommandGroup( //manual score because this thing might be stupid and dumb
                                 new dClawCommand(DepositSubsystem.ClawState.OPEN),
@@ -105,31 +98,25 @@ public class BlueSampleAuto extends CommandOpMode {
                                 new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
 
                         //Sample 2
-
+                        new InstantCommand(() -> robot.intake.slideExtendedPos = 0),
                         new PositionCommand(samp2Pos)
                                 .alongWith(new ExtendIntakeCommand()),
-                        new InstantCommand(() -> robot.intake.servoAngle = 0.67),
-                        new WaitCommand(650),
                         new SequentialCommandGroup(
                                 new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                                new WaitCommand(150),
+                                new WaitCommand(350),
                                 new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
                                 new WaitCommand(Globals.CLAW_MOVE_DELAY*2),
                                 new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
-                                new ExtendoCommand(IntakeSubsystem.ExtendoState.TRANSFER)),
-                        new WaitCommand(250),
+                                new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED)),
                         new TransferCommand(),
-                        new InstantCommand(() -> robot.intake.servoAngle = IntakeSubsystem.wristNeutralPos),
-                        new WaitCommand(250),
 
                         new SequentialCommandGroup(
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_BUCKET),
                                 new DepositCommand(DepositSubsystem.DepositState.SAMP_DEPOSIT)),
-                        new WaitCommand(1500),
+                        new WaitCommand(250),
 
                         new PositionCommand(scorePos)
                                 .alongWith(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)),
-                        new WaitCommand(250),
 
                         new SequentialCommandGroup( //manual score because this thing might be stupid and dumb
                                 new dClawCommand(DepositSubsystem.ClawState.OPEN),
@@ -138,28 +125,25 @@ public class BlueSampleAuto extends CommandOpMode {
                                 new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
 
                         //Sample 3
-
+                        new InstantCommand(() -> robot.intake.slideExtendedPos = 0.2),
                         new PositionCommand(samp3Pos)
                                 .alongWith(new ExtendIntakeCommand()),
-                        new WaitCommand(650),
                         new SequentialCommandGroup(
                                 new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                                new WaitCommand(150),
+                                new WaitCommand(350),
                                 new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
                                 new WaitCommand(Globals.CLAW_MOVE_DELAY*2),
                                 new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
-                                new ExtendoCommand(IntakeSubsystem.ExtendoState.TRANSFER)),
-                        new WaitCommand(250),
+                                new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED)),
                         new TransferCommand(),
-                        new WaitCommand(250),
 
-                        new SequentialCommandGroup(new LiftCommand(LiftSubsystem.LiftState.HIGH_BUCKET),
+                        new SequentialCommandGroup(
+                                new LiftCommand(LiftSubsystem.LiftState.HIGH_BUCKET),
                                 new DepositCommand(DepositSubsystem.DepositState.SAMP_DEPOSIT)),
-                        new WaitCommand(1500),
+                        new WaitCommand(250),
 
                         new PositionCommand(scorePos)
                                 .alongWith(new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED)),
-                        new WaitCommand(250),
 
                         new SequentialCommandGroup( //manual score because this thing might be stupid and dumb
                                 new dClawCommand(DepositSubsystem.ClawState.OPEN),
@@ -168,28 +152,26 @@ public class BlueSampleAuto extends CommandOpMode {
                                 new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
 
                         //Sample 4
-
+                        new InstantCommand(() -> robot.intake.slideExtendedPos = 0.2),
                         new PositionCommand(samp4Pos)
                                 .alongWith(new ExtendIntakeCommand()),
-                        new InstantCommand(() -> robot.intake.servoAngle = 0.48),
-                        new WaitCommand(650),
+                        new InstantCommand(() -> robot.intake.changeWristPos(-1)),
                         new SequentialCommandGroup(
                                 new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                                new WaitCommand(150),
+                                new WaitCommand(350),
                                 new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
                                 new WaitCommand(Globals.CLAW_MOVE_DELAY*2),
                                 new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
-                                new ExtendoCommand(IntakeSubsystem.ExtendoState.TRANSFER)),
-                        new WaitCommand(250),
+                                new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED)),
                         new TransferCommand(),
                         new InstantCommand(() -> robot.intake.servoAngle = IntakeSubsystem.wristNeutralPos),
 
-                        new SequentialCommandGroup(new LiftCommand(LiftSubsystem.LiftState.HIGH_BUCKET),
+                        new SequentialCommandGroup(
+                                new LiftCommand(LiftSubsystem.LiftState.HIGH_BUCKET),
                                 new DepositCommand(DepositSubsystem.DepositState.SAMP_DEPOSIT)),
-                        new WaitCommand(1500),
+                        new WaitCommand(250),
 
                         new PositionCommand(scorePos),
-                        new WaitCommand(250),
 
                         new SequentialCommandGroup( //manual score because this thing might be stupid and dumb
                                 new dClawCommand(DepositSubsystem.ClawState.OPEN),
@@ -197,8 +179,9 @@ public class BlueSampleAuto extends CommandOpMode {
                                 new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
                                 new LiftCommand(LiftSubsystem.LiftState.RETRACTED)),
 
-                        //Park
+                        new InstantCommand(() -> robot.intake.slideExtendedPos = 1),
 
+                        //Park
                         new PurePursuitCommand(parkPath, 500, Math.PI/2)
 
                 )

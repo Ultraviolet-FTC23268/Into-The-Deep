@@ -156,7 +156,7 @@ public class RobotHardware {
         localizer.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         localizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         //depositClawColor = hardwareMap.get(RevColorSensorV3.class, "depositClawColor");
-        intakeClawColor = hardwareMap.get(RevColorSensorV3.class, "intakeClawColor");
+        //intakeClawColor = hardwareMap.get(RevColorSensorV3.class, "intakeClawColor");
 
         drivetrain = new MecanumDrivetrain();
         lift = new LiftSubsystem();
