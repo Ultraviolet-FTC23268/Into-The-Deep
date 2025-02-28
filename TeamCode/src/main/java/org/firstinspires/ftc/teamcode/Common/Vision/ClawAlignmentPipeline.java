@@ -43,6 +43,8 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
 
     private List<Double> angleHistory = new ArrayList<>();
     private double smoothedAngle = 0.0;
+    private double filteredAngle = 90;
+
     private double finalAngle = 90;
 
     private static final int SKIP_FRAME_INTERVAL = 3; // Process every nth frame
@@ -145,8 +147,10 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
 
         smoothedAngle = applyLowPassFilter(avgAngle);
 
-        if (Math.abs(finalAngle - avgAngle) > minChange)
-            finalAngle = avgAngle;
+        if (Math.abs(filteredAngle - avgAngle) > minChange)
+            filteredAngle = avgAngle;
+
+        finalAngle = applyIncrementation(filteredAngle);
 
         hsv.release();
         redMask1.release();
@@ -222,6 +226,11 @@ public class ClawAlignmentPipeline implements VisionProcessor, CameraStreamSourc
     private double applyLowPassFilter(double newAngle) {
         smoothedAngle = alpha * newAngle + (1 - alpha) * smoothedAngle;
         return smoothedAngle;
+    }
+
+    private double applyIncrementation(double filteredAngle) {
+        finalAngle = Math.round(filteredAngle / 45.0) * 45.0;
+        return finalAngle;
     }
 
     public double getSampleAngle() {

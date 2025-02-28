@@ -12,7 +12,8 @@ import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.LinkedList;
 import java.util.List;
-public class SampleSelectionPipeline {
+
+public class SampleDistancePipeline {
     private Limelight3A limelight;
     private Telemetry telemetry;
     private int selectedClassIndex = 0;
@@ -24,9 +25,10 @@ public class SampleSelectionPipeline {
     private KalmanFilter limelightKalman = new KalmanFilter();
     private KalmanFilter webcamKalman = new KalmanFilter();
 
-    public String selectedSampleColor = "None";  // Track the color of the selected sample
+    private boolean specAuto = false;
+    private String selectedSampleColor = "None";
 
-    public SampleSelectionPipeline(Limelight3A limelightInstance, Telemetry telemetry, WebcamPipeline webcamPipeline) {
+    public SampleDistancePipeline(Limelight3A limelightInstance, Telemetry telemetry, WebcamPipeline webcamPipeline) {
         this.limelight = limelightInstance;
         this.telemetry = telemetry;
         this.webcamPipeline = webcamPipeline;
@@ -37,14 +39,6 @@ public class SampleSelectionPipeline {
         limelight.start();
     }
 
-    public void setSelectedClass(int classIndex) {
-        if (classIndex >= 0 && classIndex < classNames.length) {
-            selectedClassIndex = classIndex;
-            telemetry.addData("Selected Class", classNames[classIndex]);
-            telemetry.update();
-        }
-    }
-
     public void update() {
         LLResult result = limelight.getLatestResult();
         Point bestLimelightTarget = limelightKalman.update(getRawLimelightTarget(result));
@@ -53,7 +47,10 @@ public class SampleSelectionPipeline {
         Point mergedTarget = mergeTargets(bestLimelightTarget, bestWebcamTarget);
 
         telemetry.addData("Final Target", mergedTarget);
-        telemetry.addData("Selected Sample Color", selectedSampleColor);  // Report the selected color
+        telemetry.addData("Selected Sample Color", selectedSampleColor);
+
+        double distance = calculateDistance(bestWebcamTarget);
+        telemetry.addData("Sample Distance", distance);
         telemetry.update();
     }
 
@@ -75,7 +72,7 @@ public class SampleSelectionPipeline {
         double bestDistance = Double.MAX_VALUE;
 
 
-        String[] targetClasses = {"YellowSample", getAllianceColor()};
+        String[] targetClasses = specAuto ? new String[] {getAllianceColor()} : new String[] {"YellowSample", getAllianceColor()};
 
         for (DetectorResult detection : detections) {
             for (String className : targetClasses) {
@@ -94,16 +91,14 @@ public class SampleSelectionPipeline {
         return (bestTarget == null) ? null : new Point(bestTarget.getTargetXDegrees(), bestTarget.getTargetYDegrees());
     }
 
-
     private String getAllianceColor() {
         if (Globals.ALLIANCE.equals(Color.RED)) {
             return "RedSample";
         } else if (Globals.ALLIANCE.equals(Color.BLUE)) {
             return "BlueSample";
         }
-        return "UnknownSample";  // Default case
+        return "UnknownSample";
     }
-
 
     public class WebcamPipeline extends OpenCvPipeline {
         private Point bestTarget = null;
@@ -127,6 +122,7 @@ public class SampleSelectionPipeline {
                 lowerSecondColor = new Scalar(0, 100, 100);
                 upperSecondColor = new Scalar(10, 255, 255);
             }
+
             Mat maskYellow = new Mat();
             Core.inRange(hsv, lowerYellow, upperYellow, maskYellow);
 
@@ -136,27 +132,32 @@ public class SampleSelectionPipeline {
             Core.bitwise_or(maskYellow, maskSecondColor, combinedMask);
 
             Mat hierarchy = new Mat();
-            List<MatOfPoint> contours = new java.util.ArrayList<>();
+            List<MatOfPoint> contours = new LinkedList<>();
             Imgproc.findContours(combinedMask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
             double bestDistance = Double.MAX_VALUE;
             Point bestPoint = null;
             String bestColor = "None";
 
-            for (MatOfPoint contour : contours) {
-                Rect rect = Imgproc.boundingRect(contour);
-                Point center = new Point(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0);
-                double distance = Math.sqrt(Math.pow(center.x - BOTTOM_CENTER_X, 2) + Math.pow(center.y - BOTTOM_CENTER_Y, 2));
 
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    bestPoint = center;
+            if (!specAuto) {
+                for (MatOfPoint contour : contours) {
+
+                    Rect rect = Imgproc.boundingRect(contour);
+                    Point center = new Point(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0);
+                    double distance = Math.sqrt(Math.pow(center.x - BOTTOM_CENTER_X, 2) + Math.pow(center.y - BOTTOM_CENTER_Y, 2));
 
 
-                    if (Core.countNonZero(maskYellow) > 0) {
-                        bestColor = "Yellow";
-                    } else if (Core.countNonZero(maskSecondColor) > 0) {
-                        bestColor = (Globals.ALLIANCE.equals(Color.RED)) ? "Red" : "Blue";
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestPoint = center;
+
+                        // Determine the best color based on the contour area
+                        if (Core.countNonZero(maskYellow) > 0) {
+                            bestColor = "Yellow";
+                        } else if (Core.countNonZero(maskSecondColor) > 0) {
+                            bestColor = (Globals.ALLIANCE.equals(Color.RED)) ? "Red" : "Blue";
+                        }
                     }
                 }
             }
@@ -170,18 +171,34 @@ public class SampleSelectionPipeline {
             return bestTarget;
         }
     }
-}
 
-class KalmanFilter {
-    private double x = 0, y = 0;
-    private double p = 1, q = 0.1, r = 0.1;
 
-    public Point update(Point measurement) {
-        if (measurement == null) return new Point(x, y);
-        double k = p / (p + r);
-        x = x + k * (measurement.x - x);
-        y = y + k * (measurement.y - y);
-        p = (1 - k) * p + q;
-        return new Point(x, y);
+    private double calculateDistance(Point bestTarget) {
+        if (bestTarget == null) return -1;
+
+
+
+        double focalLength = 500;
+        double objectWidth = 3.5;
+
+
+        double distance = (objectWidth * focalLength) / bestTarget.x;
+
+        return distance;
+    }
+
+
+    class KalmanFilter {
+        private double x = 0, y = 0;
+        private double p = 1, q = 0.1, r = 0.1;
+
+        public Point update(Point measurement) {
+            if (measurement == null) return new Point(x, y);
+            double k = p / (p + r);
+            x = x + k * (measurement.x - x);
+            y = y + k * (measurement.y - y);
+            p = (1 - k) * p + q;
+            return new Point(x, y);
+        }
     }
 }
