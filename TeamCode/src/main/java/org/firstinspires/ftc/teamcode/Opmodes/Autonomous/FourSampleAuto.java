@@ -35,8 +35,8 @@ import java.util.ArrayList;
 
 
 //@Config
-@Autonomous(name = "\uD83D\uDD35⇽ Sample Auto")
-public class BlueSampleAuto extends CommandOpMode {
+@Autonomous(name = "⇽ 4 Sample Auto")
+public class FourSampleAuto extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
 

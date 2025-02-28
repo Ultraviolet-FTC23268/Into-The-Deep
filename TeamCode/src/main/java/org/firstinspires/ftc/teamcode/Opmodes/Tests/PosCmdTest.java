@@ -59,7 +59,7 @@ public class PosCmdTest extends CommandOpMode {
 
         testPos = new Pose(posX, posY, posH);
         testPos2 = new Pose(posX2, posY2, posH2);
-        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, -Math.PI/2));
+        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, 0));
 
         while (!isStarted()) {
             robot.read();

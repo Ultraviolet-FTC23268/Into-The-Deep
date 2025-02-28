@@ -8,16 +8,14 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoManualSpecOverrideCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitConstantCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.DepositCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.LiftCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.dClawCommand;
@@ -29,13 +27,23 @@ import org.firstinspires.ftc.teamcode.Common.Subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.ArrayList;
 
-@Disabled
+//🔴
+//🔵
 //@Config
-@Autonomous(name = "\uD83D\uDD34⇾ Specimen Auto")
-public class RedSpecAuto extends CommandOpMode {
+@Autonomous(name = "⇾ 5 Spec Auto")
+public class FiveSpecAuto extends CommandOpMode {
+
+    //CHANGE THIS TO LASER POINTER VALUE
+    private final double subDistance = 940;
+
+    //DO NOT CHANGE
+    private final double defaultDistance = 940;
+    private final double dOffset = subDistance - defaultDistance;
+    private final double scorePosition = 625 + dOffset;
 
     private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -46,14 +54,14 @@ public class RedSpecAuto extends CommandOpMode {
 
         CommandScheduler.getInstance().reset();
 
-        Globals.ALLIANCE = Color.RED;
+        Globals.ALLIANCE = Color.BLUE;
         Globals.AUTO = true;
 
         robot.init(hardwareMap);
         robot.enabled = true;
 
         robot.localizer.resetPosAndIMU();
-        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, 0));
+        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,25, 0, AngleUnit.RADIANS, 0));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -72,21 +80,19 @@ public class RedSpecAuto extends CommandOpMode {
         //robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
 
-        Pose spec1ScorePos = new Pose(660, -75, 0);
-        Pose spec2ScorePos = new Pose(675, 225, 0);
-        Pose spec3ScorePos = new Pose(675, 150, 0);
-        Pose spec4ScorePos = new Pose(675, 75, 0);
-        Pose spec5ScorePos = new Pose(700, 0, 0);
+        Pose spec1ScorePos = new Pose(scorePosition, -75, 0);
+        Pose spec2ScorePos = new Pose(scorePosition+30, 225, 0);
+        Pose spec3ScorePos = new Pose(scorePosition+30, 150, 0);
+        Pose spec4ScorePos = new Pose(scorePosition+30, 75, 0);
+        Pose spec5ScorePos = new Pose(scorePosition+50, 0, 0);
 
-        Pose postScorePos = new Pose(575, -675, 0);
-        Pose preScorePos = new Pose(575, -50, 0);
+        Pose preScorePos = new Pose(575 + dOffset, -50, 0);
         Pose preIntakePos = new Pose(235, -750, 0);
-        Pose intakePos = new Pose(80, -750, 0);
-        Pose fIntakePos = new Pose(65, -750, 0);
-        Pose parkPose = new Pose(200, 250 ,0);
+        Pose intakePos = new Pose(75, -750, 0);
+        Pose fIntakePos = new Pose(50, -750, 0);
 
         ArrayList<Vector2D> pushPath = new ArrayList<>();
-        pushPath.add(new Vector2D(575, -850));
+        pushPath.add(new Vector2D(550 + dOffset, -850));
         pushPath.add(new Vector2D(1650, -675));
         pushPath.add(new Vector2D(1650, -1000));
         pushPath.add(new Vector2D(-50, -1000));
@@ -94,13 +100,13 @@ public class RedSpecAuto extends CommandOpMode {
         pushPath.add(new Vector2D(1650, -1240));
         pushPath.add(new Vector2D(-50, -1240));
         pushPath.add(new Vector2D(1650, -1240));
-        pushPath.add(new Vector2D(1650, -1500));
-        pushPath.add(new Vector2D(-50, -1500));
+        pushPath.add(new Vector2D(1650, -1425));
+        pushPath.add(new Vector2D(-50, -1425));
         pushPath.add(new Vector2D(235, -750));
 
         ArrayList<Vector2D> parkPath = new ArrayList<>();
-        parkPath.add(new Vector2D(350, 50));
-        parkPath.add(new Vector2D(100, -1000));
+        parkPath.add(new Vector2D(350 + dOffset, 50));
+        parkPath.add(new Vector2D(100 + dOffset, -1000));
 
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(
@@ -219,7 +225,7 @@ public class RedSpecAuto extends CommandOpMode {
         robot.write();
 
         double loop = System.nanoTime();
-        telemetry.addData("hz ", 1000000000 / (loop - loopTime));
+        telemetry.addData("hz: ", 1000000000 / (loop - loopTime));
         loopTime = loop;
         telemetry.update();
 
