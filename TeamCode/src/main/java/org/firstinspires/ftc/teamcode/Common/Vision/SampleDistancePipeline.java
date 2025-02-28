@@ -1,75 +1,204 @@
 package org.firstinspires.ftc.teamcode.Common.Vision;
 
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes.DetectorResult;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Common.Utility.Color;
+import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import java.util.List;
-import java.util.ArrayList;
 import org.openftc.easyopencv.OpenCvPipeline;
-import org.opencv.core.Rect;
 
+import java.util.LinkedList;
+import java.util.List;
 
-public class SampleDistancePipeline extends OpenCvPipeline {
+public class SampleDistancePipeline {
+    private Limelight3A limelight;
+    private Telemetry telemetry;
+    private int selectedClassIndex = 0;
+    private String[] classNames = {"RedSample", "BlueSample", "YellowSample"};
+    private static final double BOTTOM_CENTER_X = 0.0;
+    private static final double BOTTOM_CENTER_Y = -30.0;
 
-    public String selectedSampleColor = "Red";
+    private WebcamPipeline webcamPipeline;
+    private KalmanFilter limelightKalman = new KalmanFilter();
+    private KalmanFilter webcamKalman = new KalmanFilter();
 
-    @Override
-    public Mat processFrame(Mat input) {
-        Mat hsv = new Mat();
-        Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
+    private boolean specAuto = false;
+    private String selectedSampleColor = "None";
 
-        Scalar lowerRed = new Scalar(0, 100, 100);
-        Scalar upperRed = new Scalar(10, 255, 255);
-        Scalar lowerBlue = new Scalar(100, 100, 100);
-        Scalar upperBlue = new Scalar(140, 255, 255);
-        Scalar lowerYellow = new Scalar(20, 100, 100);
-        Scalar upperYellow = new Scalar(30, 255, 255);
+    public SampleDistancePipeline(Limelight3A limelightInstance, Telemetry telemetry, WebcamPipeline webcamPipeline) {
+        this.limelight = limelightInstance;
+        this.telemetry = telemetry;
+        this.webcamPipeline = webcamPipeline;
+    }
 
-        Mat mask = new Mat();
-        if (selectedSampleColor.equals("Red")) {
-            Core.inRange(hsv, lowerRed, upperRed, mask);
-        } else if (selectedSampleColor.equals("Blue")) {
-            Core.inRange(hsv, lowerBlue, upperBlue, mask);
-        } else if (selectedSampleColor.equals("Yellow")) {
-            Core.inRange(hsv, lowerYellow, upperYellow, mask);
+    public void init() {
+        limelight.setPollRateHz(100);
+        limelight.start();
+    }
+
+    public void update() {
+        LLResult result = limelight.getLatestResult();
+        Point bestLimelightTarget = limelightKalman.update(getRawLimelightTarget(result));
+        Point bestWebcamTarget = webcamKalman.update(webcamPipeline.getBestTarget());
+
+        Point mergedTarget = mergeTargets(bestLimelightTarget, bestWebcamTarget);
+
+        telemetry.addData("Final Target", mergedTarget);
+        telemetry.addData("Selected Sample Color", selectedSampleColor);
+
+        double distance = calculateDistance(bestWebcamTarget);
+        telemetry.addData("Sample Distance", distance);
+        telemetry.update();
+    }
+
+    private Point mergeTargets(Point limelight, Point webcam) {
+        if (limelight == null || webcam == null) {
+            return new Point(999, 999);
         }
+        if (Math.abs(limelight.x - webcam.x) <= 5 && Math.abs(limelight.y - webcam.y) <= 5) {
+            return new Point((limelight.x + webcam.x) / 2, (limelight.y + webcam.y) / 2);
+        }
+        return new Point(999, 999);
+    }
 
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+    private Point getRawLimelightTarget(LLResult result) {
+        if (result == null || !result.isValid()) return null;
+        List<DetectorResult> detections = result.getDetectorResults();
 
-        Rect closestBoundingBox = new Rect();
-        double minDistance = Double.MAX_VALUE;
-        double frameCenterX = input.cols() / 2;
-        double frameCenterY = input.rows() / 2;
+        DetectorResult bestTarget = null;
+        double bestDistance = Double.MAX_VALUE;
 
-        for (MatOfPoint contour : contours) {
-            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
-            MatOfPoint2f approxCurve = new MatOfPoint2f();
-            double epsilon = 0.02 * Imgproc.arcLength(contour2f, true);
-            Imgproc.approxPolyDP(contour2f, approxCurve, epsilon, true);
 
-            MatOfPoint approxCurveMat = new MatOfPoint(approxCurve.toArray());
+        String[] targetClasses = specAuto ? new String[] {getAllianceColor()} : new String[] {"YellowSample", getAllianceColor()};
 
-            if (approxCurve.total() == 4) {
-                Rect boundingBox = Imgproc.boundingRect(approxCurve);
+        for (DetectorResult detection : detections) {
+            for (String className : targetClasses) {
+                if (detection.getClassName().equals(className)) {
+                    double tx = detection.getTargetXDegrees();
+                    double ty = detection.getTargetYDegrees();
+                    double distance = Math.sqrt(Math.pow(tx - BOTTOM_CENTER_X, 2) + Math.pow(ty - BOTTOM_CENTER_Y, 2));
 
-                double distance = Math.sqrt(Math.pow(boundingBox.x + boundingBox.width / 2 - frameCenterX, 2) +
-                        Math.pow(boundingBox.y + boundingBox.height / 2 - frameCenterY, 2));
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestBoundingBox = boundingBox;
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestTarget = detection;
+                    }
                 }
-
-                Imgproc.polylines(input, List.of(approxCurveMat), true, new Scalar(255, 0, 0), 2);
             }
         }
+        return (bestTarget == null) ? null : new Point(bestTarget.getTargetXDegrees(), bestTarget.getTargetYDegrees());
+    }
 
-        return input;
+    private String getAllianceColor() {
+        if (Globals.ALLIANCE.equals(Color.RED)) {
+            return "RedSample";
+        } else if (Globals.ALLIANCE.equals(Color.BLUE)) {
+            return "BlueSample";
+        }
+        return "UnknownSample";
+    }
+
+    public class WebcamPipeline extends OpenCvPipeline {
+        private Point bestTarget = null;
+
+        @Override
+        public Mat processFrame(Mat input) {
+            Mat hsv = new Mat();
+            Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
+
+            Scalar lowerYellow = new Scalar(20, 100, 100);
+            Scalar upperYellow = new Scalar(30, 255, 255);
+
+            Scalar lowerSecondColor, upperSecondColor;
+            if (Globals.ALLIANCE.equals(Color.RED)) {
+                lowerSecondColor = new Scalar(0, 100, 100);
+                upperSecondColor = new Scalar(10, 255, 255);
+            } else if (Globals.ALLIANCE.equals(Color.BLUE)) {
+                lowerSecondColor = new Scalar(100, 150, 50);
+                upperSecondColor = new Scalar(140, 255, 255);
+            } else {
+                lowerSecondColor = new Scalar(0, 100, 100);
+                upperSecondColor = new Scalar(10, 255, 255);
+            }
+
+            Mat maskYellow = new Mat();
+            Core.inRange(hsv, lowerYellow, upperYellow, maskYellow);
+
+            Mat maskSecondColor = new Mat();
+            Core.inRange(hsv, lowerSecondColor, upperSecondColor, maskSecondColor);
+            Mat combinedMask = new Mat();
+            Core.bitwise_or(maskYellow, maskSecondColor, combinedMask);
+
+            Mat hierarchy = new Mat();
+            List<MatOfPoint> contours = new LinkedList<>();
+            Imgproc.findContours(combinedMask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
+            double bestDistance = Double.MAX_VALUE;
+            Point bestPoint = null;
+            String bestColor = "None";
+
+
+            if (!specAuto) {
+                for (MatOfPoint contour : contours) {
+
+                    Rect rect = Imgproc.boundingRect(contour);
+                    Point center = new Point(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0);
+                    double distance = Math.sqrt(Math.pow(center.x - BOTTOM_CENTER_X, 2) + Math.pow(center.y - BOTTOM_CENTER_Y, 2));
+
+
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestPoint = center;
+
+                        // Determine the best color based on the contour area
+                        if (Core.countNonZero(maskYellow) > 0) {
+                            bestColor = "Yellow";
+                        } else if (Core.countNonZero(maskSecondColor) > 0) {
+                            bestColor = (Globals.ALLIANCE.equals(Color.RED)) ? "Red" : "Blue";
+                        }
+                    }
+                }
+            }
+
+            bestTarget = webcamKalman.update(bestPoint);
+            selectedSampleColor = bestColor;
+            return input;
+        }
+
+        public Point getBestTarget() {
+            return bestTarget;
+        }
+    }
+
+
+    private double calculateDistance(Point bestTarget) {
+        if (bestTarget == null) return -1;
+
+
+
+        double focalLength = 500;
+        double objectWidth = 3.5;
+
+
+        double distance = (objectWidth * focalLength) / bestTarget.x;
+
+        return distance;
+    }
+
+
+    class KalmanFilter {
+        private double x = 0, y = 0;
+        private double p = 1, q = 0.1, r = 0.1;
+
+        public Point update(Point measurement) {
+            if (measurement == null) return new Point(x, y);
+            double k = p / (p + r);
+            x = x + k * (measurement.x - x);
+            y = y + k * (measurement.y - y);
+            p = (1 - k) * p + q;
+            return new Point(x, y);
+        }
     }
 }
