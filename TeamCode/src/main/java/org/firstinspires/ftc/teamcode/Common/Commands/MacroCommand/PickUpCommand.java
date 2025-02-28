@@ -23,7 +23,7 @@ public class PickUpCommand extends SequentialCommandGroup {
                     new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
                     new WaitCommand(150),
                     new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
-                    new WaitCommand(Globals.CLAW_MOVE_DELAY*2)
+                    new WaitCommand(325)
             );
 
            // if(RobotHardware.getInstance().intake.sampleDetected())

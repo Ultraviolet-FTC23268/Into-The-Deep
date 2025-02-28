@@ -29,7 +29,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double wristMinus45Pos = 0.45;
     public static double wristPlus45Pos = 0.77;
 
-    public static double iClawClosedPos = 0.41;
+    public static double iClawClosedPos = 0.43;
     public static double iClawOpenPos = 0.2;
     public static double iClawLoosePos = 0.38;
 
@@ -45,15 +45,17 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double elbowExtendedPos = 0.35;
     public static double elbowIntakePos = 0.22;
     public static double elbowPickupPos = 0.23;
+    public static double elbowSweepPos = .62;
 
-    public static double iArmOverviewPos = 0.7;
-    public static double iArmNeutralPos = 0.44;
-    public static double iArmTransferPos = 0.72;
-    public static double iArmPostTransferPos = 0.8;
-    public static double iArmExtendedPos = 0.86;
-    public static double iArmIntakePos = 0.92;
+    public static double iArmOverviewPos = 0.44;
+    public static double iArmNeutralPos = 0.18;//0.37
+    public static double iArmTransferPos = 0.46;
+    public static double iArmPostTransferPos = 0.54;
+    public static double iArmExtendedPos = 0.6;
+    public static double iArmIntakePos = 0.66;
+    public static double iArmPickupPos = 0.76;
+    public static double iArmSweepPos = 0.95;
     public static double iArmOffset = 0;
-    public static double iArmPickupPos = 0.99;
 
     private boolean pickupReady = false;
 
@@ -77,7 +79,8 @@ public class IntakeSubsystem extends SubsystemBase {
         POST_TRANSFER,
         EXTENDED,
         INTAKE,
-        PICK_UP
+        PICK_UP,
+        SWEEP
     }
 
     public enum ClawState {
@@ -170,6 +173,13 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeArm2Servo.setPosition(iArmPickupPos + iArmOffset);
                 robot.intakeElbowServo.setPosition(elbowPickupPos);
                 pickupReady = true;
+                break;
+            case SWEEP:
+                update(ClawState.CLOSED);
+                robot.intakeArmServo.setPosition(iArmSweepPos);
+                robot.intakeArm2Servo.setPosition(iArmSweepPos + iArmOffset);
+                robot.intakeElbowServo.setPosition(elbowSweepPos);
+                pickupReady = false;
                 break;
 
         }

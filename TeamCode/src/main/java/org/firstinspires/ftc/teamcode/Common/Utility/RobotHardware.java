@@ -81,6 +81,8 @@ public class RobotHardware {
     public boolean depositRead = false;
     public boolean intakeRead = false;
 
+    public double imuOffset = 0;
+
     public static RobotHardware getInstance() {
         if (instance == null) {
             instance = new RobotHardware();

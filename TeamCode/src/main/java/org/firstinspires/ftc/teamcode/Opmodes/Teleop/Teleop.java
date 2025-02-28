@@ -8,15 +8,19 @@ import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.normalizeRadians;
+
 
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.AutomaticScoreCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ClimbUpCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
@@ -39,8 +43,11 @@ import org.firstinspires.ftc.teamcode.Common.Utility.MathUtils;
 public class Teleop extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
+    private final PIDFController hController = new PIDFController(1.1, 0, 0.025, 0);
     private GamepadEx gamepadEx;
     private GamepadEx gamepadEx2;
+
+    private boolean lockHeading = false;
 
     private double loopTime = 0.0;
 
@@ -72,6 +79,8 @@ public class Teleop extends CommandOpMode {
                 .whenPressed(() -> schedule(new ReadyIntakeCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
                 .whenPressed(() -> schedule());
+       // gamepadEx.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
+        //        .whenPressed(() -> schedule(new PositionCommand(new Pose(680, Globals.specPose, 0))));
         gamepadEx.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
                 .whenPressed(() -> schedule(new AutomaticScoreCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
@@ -116,8 +125,11 @@ public class Teleop extends CommandOpMode {
         else if(gamepadEx.getRightX() <= -0.92)
             schedule(new RetractIntakeCommand());
 
+        if(gamepadEx.getButton(GamepadKeys.Button.DPAD_LEFT))
+            robot.imuOffset = robot.localizer.getHeading();
+
         if(gamepadEx.getButton(GamepadKeys.Button.LEFT_STICK_BUTTON))
-            robot.intake.autoWrist = !robot.intake.autoWrist;
+            lockHeading = true;
 
         double left_stick_y = -gamepad1.left_stick_y,
                 left_stick_x = -gamepad1.left_stick_x;
@@ -130,13 +142,22 @@ public class Teleop extends CommandOpMode {
             left_stick_y = 0;
         }
 
-        robot.drivetrain.set(new Pose(left_stick_y, left_stick_x, MathUtils.joystickScalar(gamepad1.right_trigger - gamepad1.left_trigger, 0.01)), 0);
+        double error = normalizeRadians(normalizeRadians(0) - normalizeRadians(robot.localizer.getHeading()));
+        double headingCorrection = -hController.calculate(0 - robot.imuOffset, error) * 12.4 / robot.getVoltage();
+        if (Math.abs(headingCorrection) < 0.01)
+            headingCorrection = 0;
+
+        double turn = gamepad1.right_trigger - gamepad1.left_trigger;
+        if (Math.abs(turn) > 0.002)
+            lockHeading = false;
+
+        robot.drivetrain.set(new Pose(left_stick_y, left_stick_x, lockHeading ? headingCorrection: MathUtils.joystickScalar(turn, 0.01)), 0);
 
         double loop = System.nanoTime();
         telemetry.addData("hz: ", 1000000000 / (loop - loopTime));
-        telemetry.addData("lift: ", robot.lift.getLeftPos());
-        telemetry.addData("target: ", robot.lift.getTargetPos());
         loopTime = loop;
         telemetry.update();
     }
 }
+
+//balls
