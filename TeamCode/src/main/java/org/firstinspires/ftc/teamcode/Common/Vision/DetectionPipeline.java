@@ -169,6 +169,10 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
         // We'll be updating this with new data below
         internalStoneList.clear();
 
+        // Draw a line on the bottom 1/8 of the screen
+        Imgproc.line(input, new Point(0, CutoffLine), new Point(input.width(), CutoffLine), new Scalar(255, 0, 0), 2);
+
+
         /*
          * Run the image processing
          */
@@ -249,8 +253,6 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
                 return contoursOnPlainImageMat;
             }
         }
-
-        Imgproc.line(input, new Point(0, CutoffLine), new Point(input.width(), CutoffLine), new Scalar(255, 0, 0), 2);
 
         return input;
     }
@@ -564,6 +566,7 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
 
     @Override
     public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
+
         // Optional: If you want to draw additional information on the canvas
     }
 }
