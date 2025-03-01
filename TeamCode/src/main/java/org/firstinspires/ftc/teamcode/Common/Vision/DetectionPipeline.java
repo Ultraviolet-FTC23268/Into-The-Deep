@@ -32,6 +32,8 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import org.opencv.core.Rect;
+
 
 @Config
 public class DetectionPipeline implements CameraStreamSource, VisionProcessor
@@ -74,6 +76,7 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
 
     public static Scalar LOWER_YELLOW = new Scalar(20, 150, 50); // HSV range for yellow
     public static Scalar UPPER_YELLOW = new Scalar(30, 255, 255);
+    private static final int CutoffLine = 540;
 
     /*
      * The elements we use for noise reduction
@@ -247,6 +250,8 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
             }
         }
 
+        Imgproc.line(input, new Point(0, CutoffLine), new Point(input.width(), CutoffLine), new Scalar(255, 0, 0), 2);
+
         return input;
     }
 
@@ -308,9 +313,19 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
 
         // Analyze detected contours
         for (MatOfPoint contour : contoursList) {
-            analyzeContour(contour, input, sampleType.name());
+            // Check if the contour is above the line
+            if (isContourAboveLine(contour)) {
+                analyzeContour(contour, input, sampleType.name());
+            }
         }
     }
+
+    boolean isContourAboveLine(MatOfPoint contour) {
+        // Check the y-coordinates of the contour's bounding box
+        Rect boundingBox = Imgproc.boundingRect(contour);
+        return boundingBox.y + boundingBox.height < CutoffLine;
+    }
+
 
     void morphMask(Mat input, Mat output)
     {
