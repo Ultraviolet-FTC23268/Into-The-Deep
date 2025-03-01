@@ -39,15 +39,15 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double slideOffset = 0.0;
 
     public static double elbowNeutralPos = 0.15;
-    public static double elbowOverviewPos = 0.32;
+    public static double elbowOverviewPos = 0.15;
     public static double elbowPreTransferPos = 0.83;
     public static double elbowTransferPos = 0.88;
     public static double elbowExtendedPos = 0.35;
     public static double elbowIntakePos = 0.22;
     public static double elbowPickupPos = 0.23;
-    public static double elbowSweepPos = .62;
+    public static double elbowSweepPos = 0.62;
 
-    public static double iArmOverviewPos = 0.44;
+    public static double iArmOverviewPos = 0.53;
     public static double iArmNeutralPos = 0.18;//0.37
     public static double iArmTransferPos = 0.46;
     public static double iArmPostTransferPos = 0.54;

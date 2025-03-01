@@ -44,6 +44,10 @@ public class Pose extends Point {
         return new Pose(x + other.x, y + other.y, heading + other.heading);
     }
 
+    public Pose add(Vector2D other) {
+        return new Pose(x + other.x, y + other.y, heading);
+    }
+
     public Pose subtract(Pose other) {
         return new Pose(this.x - other.x, this.y - other.y, AngleUnit.normalizeRadians(this.heading - other.heading));
     }
