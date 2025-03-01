@@ -63,18 +63,18 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
     public static int MIN_AREA = 100000;
     public static int MAX_AREA = 300000;
 
-    public static Scalar LOWER_BLUE = new Scalar(100); // Lower bound for Cb channel (blue)
-    public static Scalar UPPER_BLUE = new Scalar(200); // Upper bound for Cb channel (blue)
-    public static Scalar LOWER_RED = new Scalar(120);  // Lower bound for Cr channel (red)
-    public static Scalar UPPER_RED = new Scalar(200);  // Upper bound for Cr channel (red)
-    public static Scalar LOWER_YELLOW = new Scalar(80); // Lower bound for Cb channel (yellow)
-    public static Scalar UPPER_YELLOW = new Scalar(120); // Upper bound for Cb channel (yellow)
-/*
-    public static int YELLOW_MASK_THRESHOLD = 90;
-    public static int BLUE_MASK_THRESHOLD = 150;
-    public static int RED_MASK_THRESHOLD = 150;
-    public static double PICKUP_Y_OFFSET = -4.5;
-*/
+    public static Scalar LOWER_BLUE = new Scalar(100, 150, 50);  // HSV range for blue
+    public static Scalar UPPER_BLUE = new Scalar(140, 255, 255);
+
+    public static Scalar LOWER_RED_1 = new Scalar(0, 150, 50);   // HSV range for lower red
+    public static Scalar UPPER_RED_1 = new Scalar(10, 255, 255);
+
+    public static Scalar LOWER_RED_2 = new Scalar(170, 150, 50); // HSV range for upper red
+    public static Scalar UPPER_RED_2 = new Scalar(180, 255, 255);
+
+    public static Scalar LOWER_YELLOW = new Scalar(20, 150, 50); // HSV range for yellow
+    public static Scalar UPPER_YELLOW = new Scalar(30, 255, 255);
+
     /*
      * The elements we use for noise reduction
      */
@@ -130,7 +130,7 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
     // Keep track of what stage the viewport is showing
     public static int stageNum = 0;
 
-    public SampleType sampleType = SampleType.Yellow;
+    public SampleType sampleType = SampleType.Blue;
 
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
@@ -273,54 +273,41 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
         return closestStone;
     }
 
-    void findContours(Mat input)
-    {
-        // Convert the input image to YCrCb color space
-        Imgproc.cvtColor(input, ycrcbMat, Imgproc.COLOR_RGB2YCrCb);
+    void findContours(Mat input) {
+        // Convert the input image to HSV color space
+        Imgproc.cvtColor(input, ycrcbMat, Imgproc.COLOR_RGB2HSV);
 
         if (sampleType == SampleType.Red) {
-            // Extract the Cr channel for red detection
-            Core.extractChannel(ycrcbMat, crMat, 1); // Cr channel index is 1
-            Core.inRange(crMat, LOWER_RED, UPPER_RED, redThresholdMat);
+            // Handle red, as it appears at both ends of the hue spectrum
+            Mat redMask1 = new Mat();
+            Mat redMask2 = new Mat();
+            Core.inRange(ycrcbMat, LOWER_RED_1, UPPER_RED_1, redMask1);
+            Core.inRange(ycrcbMat, LOWER_RED_2, UPPER_RED_2, redMask2);
+            Core.addWeighted(redMask1, 1.0, redMask2, 1.0, 0.0, redThresholdMat);
         } else if (sampleType == SampleType.Blue) {
-            Core.extractChannel(ycrcbMat, cbMat, 0);
-            Core.inRange(cbMat, LOWER_BLUE, UPPER_BLUE, blueThresholdMat);
-
-        }
-        else if (sampleType == SampleType.Yellow) {
-            Core.extractChannel(ycrcbMat, cbMat, 2);
-            Core.inRange(cbMat, LOWER_YELLOW, UPPER_YELLOW, yellowThresholdMat);
-        }
-/*
-        if (sampleType == SampleType.Blue) {
-            // Threshold the Cb channel to form a mask for blue
-            Imgproc.threshold(cbMat, blueThresholdMat, BLUE_MASK_THRESHOLD, 255, Imgproc.THRESH_BINARY);
-        } else if (sampleType == SampleType.Red) {
-            // Threshold the Cr channel to form a mask for red
-            Imgproc.threshold(crMat, redThresholdMat, RED_MASK_THRESHOLD, 255, Imgproc.THRESH_BINARY);
+            Core.inRange(ycrcbMat, LOWER_BLUE, UPPER_BLUE, blueThresholdMat);
         } else if (sampleType == SampleType.Yellow) {
-            // Threshold the Cb channel to form a mask for yellow
-            Imgproc.threshold(cbMat, yellowThresholdMat, YELLOW_MASK_THRESHOLD, 255, Imgproc.THRESH_BINARY_INV);
+            Core.inRange(ycrcbMat, LOWER_YELLOW, UPPER_YELLOW, yellowThresholdMat);
         }
-*/
+
         if (sampleType == SampleType.Blue) {
-            // Threshold the Cb channel to form a mask for blue
             morphMask(blueThresholdMat, morphedBlueThreshold);
         } else if (sampleType == SampleType.Red) {
-            // Threshold the Cr channel to form a mask for red
             morphMask(redThresholdMat, morphedRedThreshold);
         } else if (sampleType == SampleType.Yellow) {
-            // Threshold the Cb channel to form a mask for yellow
             morphMask(yellowThresholdMat, morphedYellowThreshold);
         }
 
         // Find contours in the masks
         ArrayList<MatOfPoint> contoursList = new ArrayList<>();
-        Imgproc.findContours(sampleType == SampleType.Red ? morphedRedThreshold : (sampleType == SampleType.Blue ? morphedBlueThreshold : morphedYellowThreshold), contoursList, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);
+        Imgproc.findContours(
+                sampleType == SampleType.Red ? morphedRedThreshold
+                        : (sampleType == SampleType.Blue ? morphedBlueThreshold : morphedYellowThreshold),
+                contoursList, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE
+        );
 
-        // Now analyze the contours
-        for(MatOfPoint contour : contoursList)
-        {
+        // Analyze detected contours
+        for (MatOfPoint contour : contoursList) {
             analyzeContour(contour, input, sampleType.name());
         }
     }
