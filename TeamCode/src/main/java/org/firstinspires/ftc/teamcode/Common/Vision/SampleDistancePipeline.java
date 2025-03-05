@@ -72,14 +72,21 @@ public class SampleDistancePipeline {
         double bestDistance = Double.MAX_VALUE;
 
 
-        String[] targetClasses = specAuto ? new String[] {getAllianceColor()} : new String[] {"YellowSample", getAllianceColor()};
+        double pixelsPerDegree = 1920.0 / 54.0;
+
+        String[] targetClasses = {"YellowSample", getAllianceColor()};
 
         for (DetectorResult detection : detections) {
             for (String className : targetClasses) {
                 if (detection.getClassName().equals(className)) {
                     double tx = detection.getTargetXDegrees();
                     double ty = detection.getTargetYDegrees();
-                    double distance = Math.sqrt(Math.pow(tx - BOTTOM_CENTER_X, 2) + Math.pow(ty - BOTTOM_CENTER_Y, 2));
+
+
+                    double px = tx * pixelsPerDegree;
+                    double py = ty * pixelsPerDegree;
+
+                    double distance = Math.sqrt(Math.pow(px - BOTTOM_CENTER_X, 2) + Math.pow(py - BOTTOM_CENTER_Y, 2));
 
                     if (distance < bestDistance) {
                         bestDistance = distance;
@@ -88,7 +95,10 @@ public class SampleDistancePipeline {
                 }
             }
         }
-        return (bestTarget == null) ? null : new Point(bestTarget.getTargetXDegrees(), bestTarget.getTargetYDegrees());
+        double limelightOffset = 150;
+        double correctedX = (bestTarget.getTargetXDegrees() * pixelsPerDegree) + limelightOffset;
+
+        return (bestTarget == null) ? null : new Point(correctedX, bestTarget.getTargetYDegrees() * pixelsPerDegree);
     }
 
     private String getAllianceColor() {
@@ -178,7 +188,7 @@ public class SampleDistancePipeline {
 
 
 
-        double focalLength = 500;
+        double focalLength = 700;
         double objectWidth = 3.5;
 
 
