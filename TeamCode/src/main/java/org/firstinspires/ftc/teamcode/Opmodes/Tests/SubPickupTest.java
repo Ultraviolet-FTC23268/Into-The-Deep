@@ -8,29 +8,34 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.arcrobotics.ftclib.command.SequentialCommandGroup;
+import com.arcrobotics.ftclib.command.WaitCommand;
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.iClawCommand;
+import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Point;
+import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
-import org.firstinspires.ftc.teamcode.Common.Vision.ClawAlignmentPipeline;
 import org.firstinspires.ftc.teamcode.Common.Vision.DetectionPipeline;
 import org.firstinspires.ftc.teamcode.Common.Vision.SampleType;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @Config
-@TeleOp(name = "Vision Test")
-@Disabled
-public class VisionTest extends CommandOpMode {
+@TeleOp(name = "Auto Pickup Test")
+//@Disabled
+public class SubPickupTest extends CommandOpMode {
 
     private ElapsedTime timer;
+    private GamepadEx gamepadEx;
 
     private final RobotHardware robot = RobotHardware.getInstance();
     private DetectionPipeline pipeline;
@@ -38,24 +43,33 @@ public class VisionTest extends CommandOpMode {
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
     private double loopTime = 0.0;
-    private double lastAngle = 0;
-
     public static double wristMinPos = 0.28;
     public static double wristMaxPos = 0.93;
     public static double wristNeutralPos = 0.61;
-
-    public static double minChange = 12.5;
-
     private double servoAngle = wristNeutralPos;
 
-    private double currentAngle = 0;
+    private Pose target = new Pose(0,0,0);
     private DetectionPipeline.AnalyzedSample detectedSample;
 
     @Override
     public void initialize() {
 
-        Globals.AUTO = false;
+        gamepadEx = new GamepadEx(gamepad1);
+
+        Globals.AUTO = true;
         CommandScheduler.getInstance().reset();
+
+        gamepadEx.getGamepadButton(GamepadKeys.Button.A)
+                .whenPressed(() -> schedule(new SequentialCommandGroup(
+                        new PositionCommand(target),
+                        new WaitCommand(150),
+                        new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
+                        new WaitCommand(150),
+                        new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
+                        new WaitCommand(325),
+                        new IntakeCommand(IntakeSubsystem.IntakeState.OVERVIEW))));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.START)
+                .whenPressed(() -> schedule(new iClawCommand(IntakeSubsystem.ClawState.OPEN)));
 
         pipeline = new DetectionPipeline();
         pipeline.sampleType = SampleType.Red;
@@ -76,9 +90,7 @@ public class VisionTest extends CommandOpMode {
         FtcDashboard.getInstance().startCameraStream(pipeline, 30.0);
         robot.intake.update(IntakeSubsystem.IntakeState.OVERVIEW);
         robot.intake.update(IntakeSubsystem.ExtendoState.RETRACTED);
-        robot.intakeWristServo.setPosition(wristNeutralPos);
-
-        robot.localizer.setPosition(new Pose2D(DistanceUnit.MM,0, 0, AngleUnit.RADIANS, 0));
+        //robot.intakeWristServo.setPosition(wristNeutralPos);
 
     }
 
@@ -106,6 +118,15 @@ public class VisionTest extends CommandOpMode {
             robot.intakeWristServo.setPosition(servoAngle != wristMinPos ? servoAngle : wristNeutralPos);
         }
 */
+        if(gamepadEx.getButton(GamepadKeys.Button.RIGHT_BUMPER) && detectedSample != null) {
+            servoAngle = Range.clip(wristNeutralPos - ((detectedSample.getAngle() - 90) / 300), wristMinPos, wristMaxPos);
+            robot.intakeWristServo.setPosition(servoAngle != wristMinPos ? servoAngle : wristNeutralPos);
+
+            Pose robotPose = robot.localizer.getPose();
+            Point sample = detectedSample.getTranslate();
+            target = new Pose(robotPose.x + (sample.x - 65), robotPose.y + sample.y, robotPose.heading);
+        }
+
         if (isStopRequested()) {
             portal.close();
         }

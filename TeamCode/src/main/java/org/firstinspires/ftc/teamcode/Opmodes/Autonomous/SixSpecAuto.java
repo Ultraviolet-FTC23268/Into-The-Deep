@@ -42,12 +42,9 @@ import java.util.ArrayList;
 @Autonomous(name = "\uD83D\uDD35⇾ 6 Specimen Auto")
 public class SixSpecAuto extends CommandOpMode {
 
-    //CHANGE THIS TO LASER POINTER VALUE
-    private final double subDistance = 940;
-
     //DO NOT CHANGE
     private final double defaultDistance = 940;
-    private final double dOffset = subDistance - defaultDistance;
+    private final double dOffset = Globals.subDistance - defaultDistance;
     private final double scorePosition = 625 + dOffset;
 
     private final RobotHardware robot = RobotHardware.getInstance();

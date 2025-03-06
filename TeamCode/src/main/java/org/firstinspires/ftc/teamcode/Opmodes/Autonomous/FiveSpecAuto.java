@@ -37,12 +37,9 @@ import java.util.ArrayList;
 @Autonomous(name = "⇾ 5 Spec Auto")
 public class FiveSpecAuto extends CommandOpMode {
 
-    //CHANGE THIS TO LASER POINTER VALUE
-    private final double subDistance = 940;
-
     //DO NOT CHANGE
     private final double defaultDistance = 940;
-    private final double dOffset = subDistance - defaultDistance;
+    private final double dOffset = Globals.subDistance - defaultDistance;
     private final double scorePosition = 625 + dOffset;
 
     private final RobotHardware robot = RobotHardware.getInstance();

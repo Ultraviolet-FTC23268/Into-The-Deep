@@ -8,6 +8,9 @@ public class Globals {
     public static boolean AUTO = false;
     public static Color ALLIANCE = Color.BLUE;
 
+    //CHANGE THIS TO LASER POINTER VALUE
+    public static final double subDistance = 940;
+
     public static int intakeAlphaThreshold = 500;
     public static int depositAlphaThreshold = 100;
 

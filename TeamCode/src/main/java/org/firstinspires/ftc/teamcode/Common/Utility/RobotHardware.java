@@ -20,6 +20,8 @@ import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Vision.ClawAlignmentPipeline;
+import org.firstinspires.ftc.teamcode.Common.Vision.DetectionPipeline;
+import org.firstinspires.ftc.teamcode.Common.Vision.SampleType;
 import org.firstinspires.ftc.teamcode.Common.goBILDA.GoBildaPinpointDriver;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.VisionProcessor;
@@ -76,7 +78,7 @@ public class RobotHardware {
     public GoBildaPinpointDriver localizer;
 
     private VisionPortal visionPortal;
-    public ClawAlignmentPipeline alignmentPipeline;
+    public DetectionPipeline pipeline;
 
     public boolean depositRead = false;
     public boolean intakeRead = false;
@@ -174,7 +176,7 @@ public class RobotHardware {
         }
 
         voltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
-        alignmentPipeline = new ClawAlignmentPipeline();
+        pipeline = new DetectionPipeline();
 
     }
 
@@ -209,19 +211,22 @@ public class RobotHardware {
 
     public void startCamera() {
 
-        alignmentPipeline = new ClawAlignmentPipeline();
-
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam"))
                 .setCameraResolution(new Size(1920, 1080))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
-                .addProcessors(alignmentPipeline)
+                .addProcessors(pipeline)
                 .enableLiveView(false)
                 .build();
+
     }
 
     public void closeCamera() {
         if (visionPortal != null) visionPortal.close();
+    }
+
+    public void setPipelineEnabled(DetectionPipeline pipe, boolean enabled) {
+        this.visionPortal.setProcessorEnabled(pipe, enabled);
     }
 
     public void setProcessorEnabled(VisionProcessor processor, boolean enabled) {

@@ -63,20 +63,20 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
      */
     public double AREA = 0;
     public static int MIN_AREA = 100000;
-    public static int MAX_AREA = 300000;
+    public static int MAX_AREA = 400000;
 
     public static Scalar LOWER_BLUE = new Scalar(100, 150, 50);  // HSV range for blue
     public static Scalar UPPER_BLUE = new Scalar(140, 255, 255);
 
     public static Scalar LOWER_RED_1 = new Scalar(0, 150, 50);   // HSV range for lower red
-    public static Scalar UPPER_RED_1 = new Scalar(10, 255, 255);
+    public static Scalar UPPER_RED_1 = new Scalar(1, 255, 255);
 
     public static Scalar LOWER_RED_2 = new Scalar(170, 150, 50); // HSV range for upper red
     public static Scalar UPPER_RED_2 = new Scalar(180, 255, 255);
 
     public static Scalar LOWER_YELLOW = new Scalar(20, 150, 50); // HSV range for yellow
     public static Scalar UPPER_YELLOW = new Scalar(30, 255, 255);
-    private static final int CutoffLine = 540;
+    public static int CutoffLine = 960;
 
     /*
      * The elements we use for noise reduction
@@ -147,10 +147,10 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
         // Replace these values with your actual camera calibration parameters
 
         // Focal lengths (fx, fy) and principal point (cx, cy)
-        double fx = 720; // Replace with your camera's focal length in pixels
-        double fy = 720;
-        double cx = 960; // Replace with your camera's principal point x-coordinate (usually image width / 2)
-        double cy = 540; // Replace with your camera's principal point y-coordinate (usually image height / 2)
+        double fx = 1414.79; // Replace with your camera's focal length in pixels
+        double fy = 1414.79;
+        double cx = 940.525; // Replace with your camera's principal point x-coordinate (usually image width / 2)
+        double cy = 555.64; // Replace with your camera's principal point y-coordinate (usually image height / 2)
 
         cameraMatrix.put(0, 0,
                 fx, 0, cx,
@@ -160,7 +160,7 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
         // Distortion coefficients (k1, k2, p1, p2, k3)
         // If you have calibrated your camera and have these values, use them
         // Otherwise, you can assume zero distortion for simplicity
-        distCoeffs = new MatOfDouble(0, 0, 0, 0, 0);
+        distCoeffs = new MatOfDouble( 0.0847076, -0.31114, 0.00199819, 0.0043678, 0.385143);
     }
 
     @Override
@@ -170,7 +170,7 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
         internalStoneList.clear();
 
         // Draw a line on the bottom 1/8 of the screen
-        Imgproc.line(input, new Point(0, CutoffLine), new Point(input.width(), CutoffLine), new Scalar(255, 0, 0), 2);
+        //Imgproc.line(input, new Point(0, CutoffLine), new Point(input.width(), CutoffLine), new Scalar(255, 0, 0), 2);
 
 
         /*
@@ -316,9 +316,9 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
         // Analyze detected contours
         for (MatOfPoint contour : contoursList) {
             // Check if the contour is above the line
-            if (isContourAboveLine(contour)) {
+            //if (isContourAboveLine(contour)) {
                 analyzeContour(contour, input, sampleType.name());
-            }
+            //}
         }
     }
 
@@ -408,12 +408,16 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
             // Draw the coordinate axes on the image
             drawAxis(input, rvec, tvec, cameraMatrix, distCoeffs);
 
+            double xcord = 1080 - rotatedRectFitToContour.center.y;
+            double ycord = -rotatedRectFitToContour.center.x + 1920.0 / 2;
+            double convertedX = xcord/7.685; //change from pixels to mm
+            double convertedY = ycord/7.685;
+
             // Store the pose information
             AnalyzedSample analyzedSample = new AnalyzedSample();
             analyzedSample.angle = rotRectAngle;
             analyzedSample.color = color;
-            analyzedSample.translate = new org.firstinspires.ftc.teamcode.Common.Drive.geometry.Point(
-                    rotatedRectFitToContour.center.x - 1280.0 / 2, rotatedRectFitToContour.center.y - 960.0 / 2);
+            analyzedSample.translate = new org.firstinspires.ftc.teamcode.Common.Drive.geometry.Point(convertedX, convertedY);
 
             internalStoneList.add(analyzedSample);
         }
