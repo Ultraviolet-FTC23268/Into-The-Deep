@@ -25,6 +25,7 @@ public class SampleSelectionPipeline {
     private KalmanFilter webcamKalman = new KalmanFilter();
 
     public String selectedSampleColor = "None";  // Track the color of the selected sample
+    private boolean specAuto = false;
 
     public SampleSelectionPipeline(Limelight3A limelightInstance, Telemetry telemetry, WebcamPipeline webcamPipeline) {
         this.limelight = limelightInstance;
@@ -75,6 +76,8 @@ public class SampleSelectionPipeline {
         double bestDistance = Double.MAX_VALUE;
 
 
+        double pixelsPerDegree = 1920.0 / 54.0;
+
         String[] targetClasses = {"YellowSample", getAllianceColor()};
 
         for (DetectorResult detection : detections) {
@@ -82,7 +85,12 @@ public class SampleSelectionPipeline {
                 if (detection.getClassName().equals(className)) {
                     double tx = detection.getTargetXDegrees();
                     double ty = detection.getTargetYDegrees();
-                    double distance = Math.sqrt(Math.pow(tx - BOTTOM_CENTER_X, 2) + Math.pow(ty - BOTTOM_CENTER_Y, 2));
+
+
+                    double px = tx * pixelsPerDegree;
+                    double py = ty * pixelsPerDegree;
+
+                    double distance = Math.sqrt(Math.pow(px - BOTTOM_CENTER_X, 2) + Math.pow(py - BOTTOM_CENTER_Y, 2));
 
                     if (distance < bestDistance) {
                         bestDistance = distance;
@@ -91,8 +99,12 @@ public class SampleSelectionPipeline {
                 }
             }
         }
-        return (bestTarget == null) ? null : new Point(bestTarget.getTargetXDegrees(), bestTarget.getTargetYDegrees());
+        double limelightOffset = 150;
+        double correctedX = (bestTarget.getTargetXDegrees() * pixelsPerDegree) + limelightOffset;
+
+        return (bestTarget == null) ? null : new Point(correctedX, bestTarget.getTargetYDegrees() * pixelsPerDegree);
     }
+
 
 
     private String getAllianceColor() {
