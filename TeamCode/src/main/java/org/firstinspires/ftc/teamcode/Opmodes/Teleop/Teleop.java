@@ -25,6 +25,7 @@ import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.AutomaticScor
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ClimbUpCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.HighSampleCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.LowSampleCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ManualSpecOverrideCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ReadyIntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.RetractIntakeCommand;
@@ -78,11 +79,11 @@ public class Teleop extends CommandOpMode {
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(() -> schedule(new ReadyIntakeCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(() -> schedule());
-       // gamepadEx.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
-        //        .whenPressed(() -> schedule(new PositionCommand(new Pose(680, Globals.specPose, 0))));
+                .whenPressed(() -> schedule(new LowSampleCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
                 .whenPressed(() -> schedule(new AutomaticScoreCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
+                .whenPressed(() -> schedule(new InstantCommand(() -> robot.lift.setTargetPos(15))));
         gamepadEx.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(() -> schedule(new InstantCommand(() -> robot.intake.changeWristPos(1))));
         gamepadEx.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)

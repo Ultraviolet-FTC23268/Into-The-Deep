@@ -40,7 +40,7 @@ public class FiveSpecAuto extends CommandOpMode {
     //DO NOT CHANGE
     private final double defaultDistance = 940;
     private final double dOffset = Globals.subDistance - defaultDistance;
-    private final double scorePosition = 625 + dOffset;
+    private final double scorePosition = 632.5 + dOffset;
 
     private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -77,7 +77,7 @@ public class FiveSpecAuto extends CommandOpMode {
         //robot.deposit.update(DepositSubsystem.DepositState.NEUTRAL);
         robot.intake.update(IntakeSubsystem.IntakeState.NEUTRAL);
 
-        Pose spec1ScorePos = new Pose(scorePosition, -75, 0);
+        Pose spec1ScorePos = new Pose(scorePosition+5, -75, 0);
         Pose spec2ScorePos = new Pose(scorePosition+30, 225, 0);
         Pose spec3ScorePos = new Pose(scorePosition+30, 150, 0);
         Pose spec4ScorePos = new Pose(scorePosition+30, 75, 0);
@@ -85,11 +85,11 @@ public class FiveSpecAuto extends CommandOpMode {
 
         Pose preScorePos = new Pose(575 + dOffset, -50, 0);
         Pose preIntakePos = new Pose(235, -750, 0);
-        Pose intakePos = new Pose(75, -750, 0);
-        Pose fIntakePos = new Pose(50, -750, 0);
+        Pose intakePos = new Pose(40, -750, 0);
+        Pose fIntakePos = new Pose(40, -750, 0);
 
         ArrayList<Vector2D> pushPath = new ArrayList<>();
-        pushPath.add(new Vector2D(550 + dOffset, -850));
+        pushPath.add(new Vector2D(530 + dOffset, -850));
         pushPath.add(new Vector2D(1650, -675));
         pushPath.add(new Vector2D(1650, -1000));
         pushPath.add(new Vector2D(-50, -1000));

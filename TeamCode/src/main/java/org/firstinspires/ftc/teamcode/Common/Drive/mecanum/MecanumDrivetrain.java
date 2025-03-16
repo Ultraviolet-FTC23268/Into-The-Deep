@@ -51,7 +51,6 @@ public class MecanumDrivetrain implements Drivetrain {
         double max = 1;
         for (double wheelSpeed : wheelSpeeds) max = Math.max(max, Math.abs(wheelSpeed));
 
-
         if (max > 1) {
             wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] /= max;
             wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] /= max;

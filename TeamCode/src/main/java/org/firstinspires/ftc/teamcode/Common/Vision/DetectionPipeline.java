@@ -63,13 +63,13 @@ public class DetectionPipeline implements CameraStreamSource, VisionProcessor
      */
     public double AREA = 0;
     public static int MIN_AREA = 100000;
-    public static int MAX_AREA = 400000;
+    public static int MAX_AREA = 600000;
 
     public static Scalar LOWER_BLUE = new Scalar(100, 150, 50);  // HSV range for blue
     public static Scalar UPPER_BLUE = new Scalar(140, 255, 255);
 
     public static Scalar LOWER_RED_1 = new Scalar(0, 150, 50);   // HSV range for lower red
-    public static Scalar UPPER_RED_1 = new Scalar(1, 255, 255);
+    public static Scalar UPPER_RED_1 = new Scalar(10, 255, 255);
 
     public static Scalar LOWER_RED_2 = new Scalar(170, 150, 50); // HSV range for upper red
     public static Scalar UPPER_RED_2 = new Scalar(180, 255, 255);

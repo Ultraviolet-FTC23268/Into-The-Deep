@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Common.goBILDA;
 
 import static com.qualcomm.robotcore.util.TypeConversion.byteArrayToInt;
 
+import static java.lang.Float.NaN;
+
 import com.qualcomm.hardware.lynx.LynxI2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
@@ -494,11 +496,17 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
     }
 
     //added by Lukas
+    private Pose previousCachedPose = new Pose(0,0,0);
     public Pose getPose() {
-        return new Pose(
-                xPosition,
-                yPosition,
-                hOrientation);
+
+        if(Float.isNaN(xPosition) && Float.isNaN(yPosition) && Float.isNaN(hOrientation)) {
+            System.out.println("Pinpoint done goofed");
+            return previousCachedPose;
+        }
+
+        previousCachedPose = new Pose(xPosition, yPosition, hOrientation);
+        return previousCachedPose;
+
     }
 
     /* getPosition().getX(DistanceUnit.INCH),

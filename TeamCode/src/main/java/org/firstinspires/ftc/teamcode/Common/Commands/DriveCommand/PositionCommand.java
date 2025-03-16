@@ -16,9 +16,9 @@ public class PositionCommand extends CommandBase {
     Drivetrain drivetrain;
     public Pose targetPose;
 
-    public static PIDFController xController;
-    public static PIDFController yController;
-    public static PIDFController hController;
+    public static final PIDFController xController = new PIDFController(xP, 0.0, xD, 0);
+    public static final PIDFController yController = new PIDFController(yP, 0.0, yD, 0);
+    public static final PIDFController hController = new PIDFController(hP, 0.0, hD, 0);
 
     public static double ALLOWED_TRANSLATIONAL_ERROR = 25;
     public static double ALLOWED_HEADING_ERROR = Math.toRadians(10);
@@ -35,24 +35,20 @@ public class PositionCommand extends CommandBase {
         this.drivetrain = robot.drivetrain;
         this.targetPose = targetPose;
 
-        xController = new PIDFController(xP, 0.0, xD, 0);
-        yController = new PIDFController(yP, 0.0, yD, 0);
-        hController = new PIDFController(hP, 0.0, hD, 0);
+        resetControllers();
 
+        DEAD_MS = 1250;
+    }
+
+    public void resetControllers() {
         xController.reset();
         yController.reset();
         hController.reset();
-
-        DEAD_MS = 1250;
     }
 
     public PositionCommand(Pose targetPose, int dead) {
         this.drivetrain = robot.drivetrain;
         this.targetPose = targetPose;
-
-        xController = new PIDFController(xP, 0.0, xD, 0);
-        yController = new PIDFController(yP, 0.0, yD, 0);
-        hController = new PIDFController(hP, 0.0, hD, 0);
 
         xController.reset();
         yController.reset();
@@ -69,7 +65,6 @@ public class PositionCommand extends CommandBase {
         Pose robotPose = robot.localizer.getPose();
 
 //        System.out.println("TARGET POSE " + targetPose);
-
 
         Pose powers = getPower(robotPose);
         drivetrain.set(powers);

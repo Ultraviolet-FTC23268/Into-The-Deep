@@ -69,6 +69,7 @@ public class RobotHardware {
 
     public boolean enabled;
 
+
     private HardwareMap hardwareMap;
 
     public MecanumDrivetrain drivetrain;
@@ -225,9 +226,9 @@ public class RobotHardware {
         if (visionPortal != null) visionPortal.close();
     }
 
-    public void setPipelineEnabled(DetectionPipeline pipe, boolean enabled) {
+    /*public void setPipelineEnabled(DetectionPipeline pipe, boolean enabled) {
         this.visionPortal.setProcessorEnabled(pipe, enabled);
-    }
+    }*/
 
     public void setProcessorEnabled(VisionProcessor processor, boolean enabled) {
         this.visionPortal.setProcessorEnabled(processor, enabled);

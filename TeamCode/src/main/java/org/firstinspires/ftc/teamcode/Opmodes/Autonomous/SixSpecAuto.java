@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoHighSpecimenCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.AutoManualSpecOverrideCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.LocateSampleCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionSpeedyCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PurePursuitCommand;
@@ -34,6 +35,7 @@ import org.firstinspires.ftc.teamcode.Common.Subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Color;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
+import org.firstinspires.ftc.teamcode.Common.Vision.SampleType;
 
 import java.util.ArrayList;
 
@@ -115,7 +117,6 @@ public class SixSpecAuto extends CommandOpMode {
         Pose pick3Pos = new Pose(705, -755, -1.03);
         Pose drop3Pos = new Pose(580, -700, -2.11);
 
-
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(
 
@@ -137,6 +138,8 @@ public class SixSpecAuto extends CommandOpMode {
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
                                 new WaitCommand(Globals.SPEC_SCORE_DELAY)),
 
+                        //new InstantCommand(() -> robot.startCamera()),
+
                         new dClawCommand(DepositSubsystem.ClawState.OPEN),
                         new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
                         new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
@@ -152,7 +155,10 @@ public class SixSpecAuto extends CommandOpMode {
                         new WaitCommand(Globals.CLAW_MOVE_DELAY*2),
                         new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
 
+                        //new LocateSampleCommand(SampleType.Blue),
                         //Drop extra sample
+
+                        //new InstantCommand(() -> robot.closeCamera()),
 
                         new ParallelRaceGroup(new WaitCommand(450),
                         new PositionSpeedyCommand(preDropOffPos))

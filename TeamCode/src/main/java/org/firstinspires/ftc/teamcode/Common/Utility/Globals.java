@@ -9,7 +9,7 @@ public class Globals {
     public static Color ALLIANCE = Color.BLUE;
 
     //CHANGE THIS TO LASER POINTER VALUE
-    public static final double subDistance = 940;
+    public static final double subDistance = 918;
 
     public static int intakeAlphaThreshold = 500;
     public static int depositAlphaThreshold = 100;
@@ -20,7 +20,7 @@ public class Globals {
 
     //LIFT POS
     public static int RETRACTED_POS = 25;
-    public static int LOW_BUCKET_POS = 1600;
+    public static int LOW_BUCKET_POS = 1100;
     public static int HIGH_BUCKET_POS = 2600;
     public static int PRE_HIGH_CHAMBER_POS = 1400;
     public static int HIGH_CHAMBER_POS = 1700;

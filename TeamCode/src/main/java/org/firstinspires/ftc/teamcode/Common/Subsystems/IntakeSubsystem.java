@@ -52,7 +52,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public static double iArmTransferPos = 0.46;
     public static double iArmPostTransferPos = 0.54;
     public static double iArmExtendedPos = 0.6;
-    public static double iArmIntakePos = 0.66;
+    public static double iArmIntakePos = 0.61;
     public static double iArmPickupPos = 0.76;
     public static double iArmSweepPos = 0.95;
     public static double iArmOffset = 0;
@@ -158,7 +158,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 robot.intakeElbowServo.setPosition(elbowExtendedPos);
                 break;
             case INTAKE:
-                update(ClawState.OPEN);
+                //update(ClawState.OPEN);
                 update(WristState.NEUTRAL);
                 wristPos = 0;
                 robot.intakeArmServo.setPosition(iArmIntakePos);

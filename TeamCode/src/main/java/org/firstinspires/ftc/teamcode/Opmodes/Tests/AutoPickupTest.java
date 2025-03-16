@@ -49,6 +49,7 @@ public class AutoPickupTest extends CommandOpMode {
     public static double wristMinPos = 0.28;
     public static double wristMaxPos = 0.93;
     public static double wristNeutralPos = 0.61;
+    public static double TARGET_X = 40;
     private double servoAngle = wristNeutralPos;
 
     private Pose target = new Pose(0,0,0);
@@ -127,7 +128,7 @@ public class AutoPickupTest extends CommandOpMode {
 
             Pose robotPose = robot.localizer.getPose();
             Point sample = detectedSample.getTranslate();
-            target = new Pose(robotPose.x + (sample.x - 65), robotPose.y + sample.y, robotPose.heading);
+            target = new Pose(robotPose.x  - (TARGET_X - sample.x), robotPose.y + sample.y, robotPose.heading);
         }
 
         if (isStopRequested()) {
