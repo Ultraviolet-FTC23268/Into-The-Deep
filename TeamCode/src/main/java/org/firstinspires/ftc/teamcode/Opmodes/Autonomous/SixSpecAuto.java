@@ -121,6 +121,7 @@ public class SixSpecAuto extends CommandOpMode {
                 new SequentialCommandGroup(
 
                         //Preload
+                        new InstantCommand(() -> robot.startCamera()),
 
                         new PositionCommand(spec1ScorePos)
                                 .alongWith(
@@ -133,35 +134,17 @@ public class SixSpecAuto extends CommandOpMode {
                                                 new IntakeCommand(IntakeSubsystem.IntakeState.INTAKE))),
                         //new WaitCommand(250),
 
-                        new SequentialCommandGroup( //manual score because this thing is stupid and dumb
+                        new SequentialCommandGroup(
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
                                 new WaitCommand(Globals.SPEC_SCORE_DELAY)),
 
-                        //new InstantCommand(() -> robot.startCamera()),
+                        new LocateSampleCommand(SampleType.Blue),
 
-                        new dClawCommand(DepositSubsystem.ClawState.OPEN),
-                        new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
-                        new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
-                        new AutoHighSpecimenCommand(),
+                        new InstantCommand(() -> robot.closeCamera()),
 
-                        //Pick up sample
-
-                        new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                        new ExtendoCommand(IntakeSubsystem.ExtendoState.EXTENDED),
-                        new WaitCommand(150),
-                        new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
-                        new ExtendoCommand(IntakeSubsystem.ExtendoState.EXTENDED),
-                        new WaitCommand(Globals.CLAW_MOVE_DELAY*2),
-                        new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
-
-                        //new LocateSampleCommand(SampleType.Blue),
                         //Drop extra sample
-
-                        //new InstantCommand(() -> robot.closeCamera()),
-
-                        new ParallelRaceGroup(new WaitCommand(450),
-                        new PositionSpeedyCommand(preDropOffPos))
+                        new PositionSpeedyCommand(preDropOffPos, 450)
                                 .alongWith(new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED)),
                         new PositionSpeedyCommand(dropOffPos),
                         new iClawCommand(IntakeSubsystem.ClawState.OPEN),
@@ -176,9 +159,7 @@ public class SixSpecAuto extends CommandOpMode {
                                                 new ExtendoCommand(IntakeSubsystem.ExtendoState.EXTENDED),
                                                 new WaitCommand(900),
                                                 new IntakeCommand(IntakeSubsystem.IntakeState.SWEEP))),
-                        new ParallelRaceGroup(
-                                new WaitCommand(600),
-                                new PositionSpeedyCommand(drop1Pos)),
+                        new PositionSpeedyCommand(drop1Pos, 600),
 
                         new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
                         new PositionSpeedyCommand(pick2Pos)
@@ -187,9 +168,7 @@ public class SixSpecAuto extends CommandOpMode {
                                                 new ExtendoCommand(IntakeSubsystem.ExtendoState.EXTENDED),
                                                 new WaitCommand(750),
                                                 new IntakeCommand(IntakeSubsystem.IntakeState.SWEEP))),
-                        new ParallelRaceGroup(
-                                new WaitCommand(600),
-                                new PositionSpeedyCommand(drop2Pos)),
+                        new PositionSpeedyCommand(drop2Pos, 600),
 
                         new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
                         new PositionSpeedyCommand(pick3Pos)
@@ -198,9 +177,7 @@ public class SixSpecAuto extends CommandOpMode {
                                                 new ExtendoCommand(IntakeSubsystem.ExtendoState.EXTENDED),
                                                 new WaitCommand(750),
                                                 new IntakeCommand(IntakeSubsystem.IntakeState.SWEEP))),
-                        new ParallelRaceGroup(
-                                new WaitCommand(750),
-                                new PositionSpeedyCommand(drop3Pos)),
+                        new PositionSpeedyCommand(drop3Pos, 750),
 
                         /*//Sample 1
                         new InstantCommand(() -> robot.intake.changeWristPos(1)),
@@ -247,21 +224,16 @@ public class SixSpecAuto extends CommandOpMode {
                         new iClawCommand(IntakeSubsystem.ClawState.OPEN),
                         new WaitCommand(150),*/
 
-                        //Spec 2
                         new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED),
                         new IntakeCommand(IntakeSubsystem.IntakeState.NEUTRAL),
-                        new PositionCommand(fIntakePos),
-                        new PositionCommand(fIntakePos),
-                        new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED),
+
+                        //Spec 2
+                        new PositionCommand(fIntakePos, 2000),
                         new dClawCommand(DepositSubsystem.ClawState.CLOSED),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                        new ParallelRaceGroup(
-                                new WaitCommand(1100),
-                        new PositionCommand(preScorePos))
+                        new PositionCommand(preScorePos, 1100)
                                 .alongWith(new AutoManualSpecOverrideCommand()),
-                        new ParallelRaceGroup(
-                                new WaitCommand(350),
-                        new PositionCommand(spec2ScorePos)),
+                        new PositionCommand(spec2ScorePos,350),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
@@ -274,18 +246,12 @@ public class SixSpecAuto extends CommandOpMode {
                                            new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
                                            new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
                                            new AutoHighSpecimenCommand())),
-                        new ParallelRaceGroup(
-                                new WaitCommand(500),
-                                new PositionCommand(intakePos)),
+                        new PositionCommand(intakePos, 500),
                         new dClawCommand(DepositSubsystem.ClawState.CLOSED),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                        new ParallelRaceGroup(
-                                new WaitCommand(1100),
-                        new PositionCommand(preScorePos))
+                        new PositionCommand(preScorePos, 1100)
                                 .alongWith(new AutoManualSpecOverrideCommand()),
-                        new ParallelRaceGroup(
-                                new WaitCommand(350),
-                        new PositionCommand(spec3ScorePos)),
+                        new PositionCommand(spec3ScorePos,350),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
@@ -298,18 +264,12 @@ public class SixSpecAuto extends CommandOpMode {
                                         new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
                                         new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
                                         new AutoHighSpecimenCommand())),
-                        new ParallelRaceGroup(
-                                new WaitCommand(500),
-                                new PositionCommand(intakePos)),
+                        new PositionCommand(intakePos, 500),
                         new dClawCommand(DepositSubsystem.ClawState.CLOSED),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                        new ParallelRaceGroup(
-                                new WaitCommand(1100),
-                        new PositionCommand(preScorePos))
+                        new PositionCommand(preScorePos, 1100)
                                 .alongWith(new AutoManualSpecOverrideCommand()),
-                        new ParallelRaceGroup(
-                                new WaitCommand(350),
-                        new PositionCommand(spec4ScorePos)),
+                        new PositionCommand(spec4ScorePos,350),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
@@ -322,18 +282,12 @@ public class SixSpecAuto extends CommandOpMode {
                                         new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
                                         new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
                                         new AutoHighSpecimenCommand())),
-                        new ParallelRaceGroup(
-                                new WaitCommand(500),
-                                new PositionCommand(intakePos)),
+                        new PositionCommand(intakePos, 500),
                         new dClawCommand(DepositSubsystem.ClawState.CLOSED),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                        new ParallelRaceGroup(
-                                new WaitCommand(1100),
-                        new PositionCommand(preScorePos))
+                        new PositionCommand(preScorePos, 1100)
                                 .alongWith(new AutoManualSpecOverrideCommand()),
-                        new ParallelRaceGroup(
-                                new WaitCommand(350),
-                        new PositionCommand(spec5ScorePos)),
+                        new PositionCommand(spec5ScorePos,350),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),
@@ -346,19 +300,12 @@ public class SixSpecAuto extends CommandOpMode {
                                         new DepositCommand(DepositSubsystem.DepositState.NEUTRAL),
                                         new LiftCommand(LiftSubsystem.LiftState.RETRACTED),
                                         new AutoHighSpecimenCommand())),
-
-                        new ParallelRaceGroup(
-                                new WaitCommand(500),
-                                new PositionCommand(intakePos)),
+                        new PositionCommand(intakePos, 500),
                         new dClawCommand(DepositSubsystem.ClawState.CLOSED),
                         new WaitCommand(Globals.CLAW_MOVE_DELAY),
-                        new ParallelRaceGroup(
-                                new WaitCommand(1100),
-                        new PositionCommand(preScorePos))
+                        new PositionCommand(preScorePos, 1100)
                                 .alongWith(new AutoManualSpecOverrideCommand()),
-                        new ParallelRaceGroup(
-                                new WaitCommand(350),
-                        new PositionCommand(spec6ScorePos)),
+                        new PositionCommand(spec6ScorePos,350),
                         new SequentialCommandGroup( //manual score because this thing is stupid and dumb
                                 new LiftCommand(LiftSubsystem.LiftState.HIGH_CHAMBER),
                                 new InstantCommand(() -> RobotHardware.getInstance().depositElbowServo.setPosition(DepositSubsystem.elbowSpecScorePos)),

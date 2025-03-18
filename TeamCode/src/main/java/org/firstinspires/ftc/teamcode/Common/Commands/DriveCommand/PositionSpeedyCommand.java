@@ -42,7 +42,7 @@ public class PositionSpeedyCommand extends CommandBase {
     private ElapsedTime stable;
 
     public static double STABLE_MS = 100;
-    public static double DEAD_MS = 1250;
+    public double DEAD_MS = 1250;
 
     public PositionSpeedyCommand(Pose targetPose) {
         this.drivetrain = robot.drivetrain;
@@ -55,8 +55,6 @@ public class PositionSpeedyCommand extends CommandBase {
         xController.reset();
         yController.reset();
         hController.reset();
-
-        DEAD_MS = 1250;
     }
 
     public PositionSpeedyCommand(Pose targetPose, int dead) {

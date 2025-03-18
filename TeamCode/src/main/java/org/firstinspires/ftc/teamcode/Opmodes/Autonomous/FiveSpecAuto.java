@@ -40,7 +40,7 @@ public class FiveSpecAuto extends CommandOpMode {
     //DO NOT CHANGE
     private final double defaultDistance = 940;
     private final double dOffset = Globals.subDistance - defaultDistance;
-    private final double scorePosition = 632.5 + dOffset;
+    private final double scorePosition = 625 + dOffset;
 
     private final RobotHardware robot = RobotHardware.getInstance();
 

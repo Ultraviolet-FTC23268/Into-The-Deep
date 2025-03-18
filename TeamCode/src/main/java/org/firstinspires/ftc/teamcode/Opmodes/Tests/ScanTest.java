@@ -59,6 +59,8 @@ public class ScanTest extends CommandOpMode {
                 .whenPressed(() -> schedule(new LocateSampleCommand(SampleType.Blue)));
         gamepadEx.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(() -> schedule(new ExtendIntakeCommand()));
+        gamepadEx.getGamepadButton(GamepadKeys.Button.START)
+                .whenPressed(() -> schedule(new iClawCommand(IntakeSubsystem.ClawState.OPEN)));
 
         robot.init(hardwareMap);
         robot.enabled = true;

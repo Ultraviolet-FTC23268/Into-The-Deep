@@ -29,21 +29,13 @@ public class PositionCommand extends CommandBase {
     private ElapsedTime stable;
 
     public static double STABLE_MS = 100;
-    public static double DEAD_MS = 1250;
+    public double DEAD_MS = 1250;
    
     public PositionCommand(Pose targetPose) {
         this.drivetrain = robot.drivetrain;
         this.targetPose = targetPose;
 
         resetControllers();
-
-        DEAD_MS = 1250;
-    }
-
-    public void resetControllers() {
-        xController.reset();
-        yController.reset();
-        hController.reset();
     }
 
     public PositionCommand(Pose targetPose, int dead) {
@@ -55,6 +47,12 @@ public class PositionCommand extends CommandBase {
         hController.reset();
 
         DEAD_MS = dead;
+    }
+
+    public void resetControllers() {
+        xController.reset();
+        yController.reset();
+        hController.reset();
     }
 
     @Override
