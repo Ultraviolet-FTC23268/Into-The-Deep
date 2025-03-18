@@ -47,6 +47,7 @@ public class LocateSampleCommand extends CommandBase {
     private boolean cancelled = false;
     private boolean shift = false;
     private boolean done = false;
+    private boolean loggingEnabled = true;
 
     public static double wristMinPos = 0.28;
     public static double wristMaxPos = 0.93;
@@ -86,6 +87,7 @@ public class LocateSampleCommand extends CommandBase {
         if (move == null) {
             move = new ElapsedTime();
             startPose = robot.localizer.getPose();
+            System.out.println("start searching");
         }
 
         if(detectedSample == null && move.milliseconds() < 100) {
@@ -118,10 +120,12 @@ public class LocateSampleCommand extends CommandBase {
 
         else if(detectedSample == null && shift && move.milliseconds() > 100) {
             cancel();
+            System.out.println("cancelled");
         }
 
         else if(detectedSample != null && !done) {
 
+            System.out.println("moving to located sample");
             if (stable == null) {
                 stable = new ElapsedTime();
                 kill = new ElapsedTime();
@@ -141,6 +145,7 @@ public class LocateSampleCommand extends CommandBase {
 
         else if(done) {
 
+            System.out.println("picking up sample");
             DetectionPipeline.AnalyzedSample prevSample = detectedSample;
             detectedSample = robot.pipeline.chooseClosestValidSample();
 
