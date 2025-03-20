@@ -127,8 +127,6 @@ public class LocateSampleCommand extends CommandBase {
     /**
      * Indicates that the robot has picked up the sample
      */
-
-    //Testing Github
     private boolean hasPickedUpSample = false;
 
     // Target pose for moving to the sample (set once, used across execute() calls)
@@ -187,8 +185,14 @@ public class LocateSampleCommand extends CommandBase {
         log("LocateSampleCommand2: Moving to sample at " + detectedSample.getTranslate());
 
         if (moveToSampleTargetPose == null) {
+            /*
             moveToSampleTargetPose = new Pose(startPose.x - (TARGET_X - detectedSample.getTranslate().x),
                     startPose.y + detectedSample.getTranslate().y,
+                    startPose.heading);
+            */
+            //Account for swapped X and Y with the localizer by inverting X and Y
+            moveToSampleTargetPose = new Pose(startPose.y + detectedSample.getTranslate().y,
+                    startPose.x - (TARGET_X - detectedSample.getTranslate().x),
                     startPose.heading);
 
             stableTimer = new ElapsedTime();
