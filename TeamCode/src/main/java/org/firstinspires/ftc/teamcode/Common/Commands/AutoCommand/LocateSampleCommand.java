@@ -44,7 +44,7 @@ public class LocateSampleCommand extends CommandBase {
     private boolean cancelled = false;
     private boolean isShifted = false;
     private boolean isRobotAtSampleLocation = false;
-    private boolean isLoggingEnabled = true;
+    private final boolean isLoggingEnabled = true;
 
     public static double wristMinPos = 0.28;
     public static double wristMaxPos = 0.93;
@@ -185,14 +185,13 @@ public class LocateSampleCommand extends CommandBase {
         log("LocateSampleCommand2: Moving to sample at " + detectedSample.getTranslate());
 
         if (moveToSampleTargetPose == null) {
-            /*
-            moveToSampleTargetPose = new Pose(startPose.x - (TARGET_X - detectedSample.getTranslate().x),
-                    startPose.y + detectedSample.getTranslate().y,
-                    startPose.heading);
-            */
-            //Account for swapped X and Y with the localizer by inverting X and Y
-            moveToSampleTargetPose = new Pose(startPose.y + detectedSample.getTranslate().y,
-                    startPose.x - (TARGET_X - detectedSample.getTranslate().x),
+
+            //Account for swapped X and Y with the Localizer by swapping X and Y
+            double sampleX = detectedSample.getTranslate().y;
+            double sampleY = detectedSample.getTranslate().x;
+
+            moveToSampleTargetPose = new Pose(startPose.y + sampleY,
+                    startPose.x - (TARGET_X - sampleX),
                     startPose.heading);
 
             stableTimer = new ElapsedTime();
@@ -204,13 +203,17 @@ public class LocateSampleCommand extends CommandBase {
 
         Pose robotPose = robot.localizer.getPose();
         Pose power = getPower(robotPose, moveToSampleTargetPose);
-        log("LocateSampleCommand2: setting drivetrain power " + power);
+        log("LocateSampleCommand2: setting drivetrain power " + power + " based on robotPose " + robotPose + ", moveToSampleTargetPose " + moveToSampleTargetPose);
         robot.drivetrain.set(power);
 
         // Check if we are close enough to the target
         Pose delta = moveToSampleTargetPose.subtract(robotPose);
-        if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR)
+        if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR) {
+            log("LocateSampleCommand2: moveToSample() achieved stability (delta = " + delta + ")");
             stableTimer.reset();
+        } else {
+            log("LocateSampleCommand2: moveToSample() still not at sample location. Check for decreasing delta in logs. If not decreasing, change vector. (delta = " + delta + ")");
+        }
 
         if (delta.toVec2D().magnitude() <= ALLOWED_TRANSLATIONAL_ERROR && stableTimer.milliseconds() > stableTimerTimeout) {
             isRobotAtSampleLocation = true;
