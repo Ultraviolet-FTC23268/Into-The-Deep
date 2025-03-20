@@ -203,7 +203,9 @@ public class LocateSampleCommand extends CommandBase {
         }
 
         Pose robotPose = robot.localizer.getPose();
-        robot.drivetrain.set(getPower(robotPose, moveToSampleTargetPose));
+        Pose power = getPower(robotPose, moveToSampleTargetPose);
+        log("LocateSampleCommand2: setting drivetrain power " + power);
+        robot.drivetrain.set(power);
 
         // Check if we are close enough to the target
         Pose delta = moveToSampleTargetPose.subtract(robotPose);
