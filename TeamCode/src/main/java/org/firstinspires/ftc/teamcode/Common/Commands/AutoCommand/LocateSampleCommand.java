@@ -24,6 +24,7 @@ import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.ExtendoCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.iClawCommand;
@@ -33,16 +34,62 @@ import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import org.firstinspires.ftc.teamcode.Common.Vision.DetectionPipeline;
 import org.firstinspires.ftc.teamcode.Common.Vision.SampleType;
 
+import java.util.Locale;
+
 @Config
 public class LocateSampleCommand extends CommandBase {
+
+    // A list of system States.
+    private enum State
+    {
+        //states are defined with default timeouts for each state in ms.
+        STATE_INITIAL(500),             //Initial state
+        STATE_VISUAL_SEARCH(3000),      //Visual search using camera
+        STATE_SHIFT_BACK(2000),         //Shifting back when sample not detected
+        STATE_MOVE_TO_SAMPLE(3000),     //Moving towards the sample
+        STATE_PICK_UP_SAMPLE(3000),     //Picking up the sample
+        STATE_PREPARE_TO_RTB(3000),     //Preparing to return to base or continue execution of OpMode
+        STATE_STOP(-1); //No timeout    //Emergency stop (if needed)
+
+        private final int timeoutMs; // Timeout in milliseconds
+
+        State(int timeoutMs) {
+            this.timeoutMs = timeoutMs;
+        }
+
+        public int getTimeout() {
+            return timeoutMs;
+        }
+    }
+
+    //Loop cycle time stats variables
+    /**
+     * Overall elapsed time
+     */
+    public ElapsedTime runtimeTimer = new ElapsedTime();
+
+    /**
+     * Time in current state
+     */
+    private ElapsedTime stateTimer = new ElapsedTime();
+
+    /**
+     * Current state
+     */
+    private State currentState;    // Current State Machine State.
+
+    //private int[] stateTimeout
+    /**
+     * Telemetry object for displaying telemetry data on Driver Station.
+     */
+    private Telemetry telemetry;
 
     private RobotHardware robot = RobotHardware.getInstance();
     private DetectionPipeline.AnalyzedSample detectedSample = null;
 
-    public double slideExtendedPos = 0.4;
+    //public double slideExtendedPos = 0.4;
     public boolean finished = false;
     private boolean cancelled = false;
-    private boolean isShifted = false;
     private boolean isRobotAtSampleLocation = false;
     private final boolean isLoggingEnabled = true;
 
@@ -50,7 +97,6 @@ public class LocateSampleCommand extends CommandBase {
     public static double wristMaxPos = 0.93;
     public static double wristNeutralPos = 0.61;
     public static double TARGET_X = 25;
-    private double servoAngle = wristNeutralPos;
 
     private Pose startPose;
 
@@ -74,32 +120,6 @@ public class LocateSampleCommand extends CommandBase {
     private final int stableTimerTimeout = 100;
 
     /**
-     * action timer for stopping action when it takes too long to execute
-     */
-    private ElapsedTime killTimer;
-
-    /**
-     * Allowed time for an individual action. Used to be 1250. Need to re-check this.
-     */
-    private final int killTimerTimeout = 2000;
-
-    /**
-     * movement timer
-     */
-
-    private ElapsedTime moveTimer;
-
-    /**
-     * Allowed time for searching for the extra sample in the submersible
-     */
-    private final int searchMovementTimeout = 2000;
-
-    /**
-     * Overall duration of process allowed before the action is cancelled
-     */
-    private final int cancellationTimeout = 3000;
-
-    /**
      * Incremental distance for backward shift during a search
      */
     private final int backwardShiftDistance = 30;
@@ -114,15 +134,6 @@ public class LocateSampleCommand extends CommandBase {
      */
     private int currentBackwardShiftOffset = 0;
 
-    /**
-     * Indicates that the robot is moving towards the sample
-     */
-    private boolean isMovingToSample = false;
-
-    /**
-     * Indicates that the robot is picking up the sample
-     */
-    private boolean isPickingUpSample = false;
 
     /**
      * Indicates that the robot has picked up the sample
@@ -132,7 +143,21 @@ public class LocateSampleCommand extends CommandBase {
     // Target pose for moving to the sample (set once, used across execute() calls)
     private Pose moveToSampleTargetPose = null;
 
-    public LocateSampleCommand(SampleType sampleType) {
+    /**
+     * Stores the current pickup attempt number
+     */
+    private int currentPickupAttemptNumber = 0;
+    /**
+     * Maximum number of sample pickup attempts
+     */
+    private final int maxNumberOfPickupAttempts = 3;
+
+    /**
+     * A flag used to signal to the FSM that the pickup attempt failed
+     */
+    private boolean currentPickupAttemptFailed = false;
+
+    public LocateSampleCommand(SampleType sampleType, Telemetry telemetry) {
         robot.pipeline.sampleType = sampleType;
         //robot.setPipelineEnabled(robot.pipeline, true);
         xController = new PIDFController(xP*2.5, 0.0, xD, 0);
@@ -145,31 +170,212 @@ public class LocateSampleCommand extends CommandBase {
 
         robot.intake.update(IntakeSubsystem.IntakeState.OVERVIEW);
         robot.intake.update(IntakeSubsystem.ExtendoState.EXTENDED);
+
+        this.telemetry = telemetry;
+        initStartSearching(); //capture the initial robot pose
+
+        runtimeTimer.reset();           // Zero game clock
+        newState(State.STATE_INITIAL);
     }
 
     @Override
     public void execute() {
         if (cancelled) {
             cancelSearch();
+            newState(State.STATE_STOP);
             return;
         }
 
-        if (moveTimer == null) initTimersAndStartSearching();
+        // Send the current state info (state and time) back to first line of driver station telemetry.
+        logTelemetry("0", String.format(Locale.US, "%4.1f ", stateTimer.time()) + currentState.toString());
 
-        if (detectedSample == null) {
-            DetectSampleWithinTimeout();
-            if (cancelled) {
-                cancelSearch();
-                return;
-            }
-        }
-        else {
-            //Sample found
-            if (isRobotAtSampleLocation) pickUpSample();
-            else moveToSample();
+        // Execute the current state.  Each STATE's case code does the following:
+        // 1: Look for an EVENT that will cause a STATE change
+        // 2: If an EVENT is found, take any required ACTION, and then set the next STATE
+        //   else
+        // 3: If no EVENT is found, do processing for the current STATE and send TELEMETRY data for STATE.
+        //
+        switch (currentState) {
+            case STATE_INITIAL:
+                processStateInitial();
+                break;
+            case STATE_VISUAL_SEARCH:
+                processStateVisualSearch();
+                break;
+            case STATE_SHIFT_BACK:
+                processStateShiftBack();
+                break;
+            case STATE_MOVE_TO_SAMPLE:
+                processStateMoveToSample();
+            case STATE_PICK_UP_SAMPLE:
+                processStatePickUpSample();
+            case STATE_STOP:
+            default:
+                break;
+
         }
     }
 
+    /**
+     * Process the Pick-Up-Sample state of the FSM
+     */
+    private void processStatePickUpSample() {
+        //Check end-of-state condition
+        if (hasPickedUpSample) {
+            //Start new action
+            SignalCompletion();
+            //change state
+            newState(State.STATE_PREPARE_TO_RTB);
+        }
+        else if (IsStateTimedOut(currentState)) {
+            //Could not pick up the sample
+            cancelSearch();
+        }
+        else {
+            // Display Diagnostic data for this state.
+            trackSamplePickup();
+            logTelemetry("1", "Picking up sample (attempt:" + currentPickupAttemptNumber + ")");
+        }
+    }
+
+    /**
+     * Signals completion of the entire action
+     */
+    private void SignalCompletion() {
+        finished = true;
+        logTelemetry("1", "Picked up sample");
+    }
+
+    /**
+     * Tracks the process of picking up the detected sample
+     */
+    private void trackSamplePickup() {
+        if (currentPickupAttemptFailed) {
+            currentPickupAttemptFailed = false;
+            if (currentPickupAttemptNumber<maxNumberOfPickupAttempts) {
+                //Retry picking up sample
+                log("LocateSampleCommand: retrying sample pickup (attempt: " + currentPickupAttemptNumber + ")");
+                pickUpSample();
+            } else {
+                cancelSearch();
+            }
+        }
+    }
+
+    /**
+     * Process the Move-To-Sample state of the FSM
+     */
+    private void processStateMoveToSample() {
+        //Check end-of-state condition
+        if (isRobotAtSampleLocation) {
+            //Start new action
+            pickUpSample();
+            //change state
+            newState(State.STATE_PICK_UP_SAMPLE);
+        }
+        else if (IsStateTimedOut(currentState)) {
+            //Could not reach the sample
+            cancelSearch();
+        }
+        else {
+            // Display Diagnostic data for this state.
+            trackMovementToSample();
+            Pose delta = getMoveToSampleDelta();
+            logTelemetry("1", "Moving to sample (delta:" + delta + ")");
+        }
+    }
+
+    /**
+     * Processes the Shift Back state of the FSM
+     */
+    private void processStateShiftBack() {
+        //Check end-of-state condition
+        if (IsStateTimedOut(currentState)) {
+            //Start new action
+            DetectSample();
+            //change state
+            newState(State.STATE_VISUAL_SEARCH);
+        }
+        else {
+            // Display Diagnostic data for this state.
+            logTelemetry("1", "Shifting robot back");
+        }
+    }
+
+
+
+    /**
+     * Processes the Visual Search state of the FSM
+     */
+    private void processStateVisualSearch() {
+        //Check end-of-state condition
+        if (detectedSample != null) {
+            //Start new action
+            moveToSample();
+            //change state
+            newState(State.STATE_MOVE_TO_SAMPLE);
+        }
+        else if (IsStateTimedOut(currentState)) {
+            //If we have not exceeded the maximum backward shift distance
+            //then shift back, otherwise cancel the operation
+            if (currentBackwardShiftOffset<maxBackwardShiftDistance) {
+                //Start new action
+                shiftRobotBack();
+                //change state
+                newState(State.STATE_SHIFT_BACK);
+            } else {
+                //Start new action
+                cancelSearch();
+                //change state
+                newState(State.STATE_STOP);
+            }
+        }
+        else {
+            // Display Diagnostic data for this state.
+            logTelemetry("1", "Searching for sample");
+        }
+    }
+
+    /**
+     * Process the initial state of the FSM
+     */
+    private void processStateInitial() {
+        //Check end-of-state condition
+        if (IsStateTimedOut(currentState)) {
+            //Start new action
+            DetectSample();
+            //change state
+            newState(State.STATE_VISUAL_SEARCH);
+        } else {
+            // Display Diagnostic data for this state.
+            logTelemetry("1", "Initializing");
+        }
+    }
+
+    /**
+     * Checks if a specified state has timed out.
+     * @param state state of the FSM
+     * @return true if timed out
+     */
+    private boolean IsStateTimedOut(State state) {
+        int timeout = state.getTimeout();
+        return this.stateTimer.milliseconds()>timeout;
+    }
+
+    /**
+     * Sets the new state for the Finite State Machine engine in this class.
+     * @param newState new state value
+     */
+    private void newState(State newState)
+    {
+        // Reset the state time, and then change to next state.
+        stateTimer.reset();
+        currentState = newState;
+    }
+
+    /**
+     * Signals cancellation of searching
+     */
     private void cancelSearch() {
         finished = true;
         log("LocateSampleCommand2: Command cancelled.");
@@ -186,6 +392,9 @@ public class LocateSampleCommand extends CommandBase {
 
         if (moveToSampleTargetPose == null) {
 
+            //TO DO: Lukas, please double-check this swapping of X and Y
+            //and pose calculation
+
             //Account for swapped X and Y with the Localizer by swapping X and Y
             double sampleX = detectedSample.getTranslate().y;
             double sampleY = detectedSample.getTranslate().x;
@@ -195,11 +404,18 @@ public class LocateSampleCommand extends CommandBase {
                     startPose.heading);
 
             stableTimer = new ElapsedTime();
-            killTimer = new ElapsedTime();
-
-            // Mark as moving
-            isMovingToSample = true;
         }
+
+        trackMovementToSample();
+    }
+
+    /**
+     * Continues moving the robot to the sample once the sample has been found
+     */
+    private void trackMovementToSample() {
+        if (isRobotAtSampleLocation) return; // Prevent redundant calls
+
+        log("LocateSampleCommand2: continuing moving to sample at " + detectedSample.getTranslate());
 
         Pose robotPose = robot.localizer.getPose();
         Pose power = getPower(robotPose, moveToSampleTargetPose);
@@ -209,29 +425,34 @@ public class LocateSampleCommand extends CommandBase {
         // Check if we are close enough to the target
         Pose delta = moveToSampleTargetPose.subtract(robotPose);
         if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR) {
-            log("LocateSampleCommand2: moveToSample() achieved stability (delta = " + delta + ")");
+            log("LocateSampleCommand2: trackMovementToSample() achieved stability (delta = " + delta + ")");
             stableTimer.reset();
         } else {
-            log("LocateSampleCommand2: moveToSample() still not at sample location. Check for decreasing delta in logs. If not decreasing, change vector. (delta = " + delta + ")");
+            log("LocateSampleCommand2: trackMovementToSample() still not at sample location. Check for decreasing delta in logs. If not decreasing, change vector. (delta = " + delta + ")");
         }
 
         if (delta.toVec2D().magnitude() <= ALLOWED_TRANSLATIONAL_ERROR && stableTimer.milliseconds() > stableTimerTimeout) {
             isRobotAtSampleLocation = true;
-            isMovingToSample = false;
             log("LocateSampleCommand2: Arrived at sample location.");
         }
+    }
 
-
+    /**
+     * Returns the difference between the MoveToSampleTargetPose and the current robot position
+     * @return Pose object representing the difference
+     */
+    private Pose getMoveToSampleDelta() {
+        Pose robotPose = robot.localizer.getPose();
+        return moveToSampleTargetPose.subtract(robotPose);
     }
 
     /**
      * Calculates the wrist angle and attempts to grab the sample
      */
     private void pickUpSample() {
-        if (isPickingUpSample || hasPickedUpSample) return;
+        if (hasPickedUpSample) return;
 
         log("LocateSampleCommand2: picking up sample");
-        isPickingUpSample = true;
 
         DetectionPipeline.AnalyzedSample prevSample = detectedSample;
         detectedSample = robot.pipeline.chooseClosestValidSample();
@@ -252,30 +473,38 @@ public class LocateSampleCommand extends CommandBase {
                 new WaitCommand(325),
                 new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
                 new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED),
-                new InstantCommand(() -> {
-                    hasPickedUpSample = true;  // Mark that we have completed the pickup process
-                    isPickingUpSample = false; // Reset flag
-                    log("LocateSampleCommand2: Sample pickup complete.");
-                })
+                new InstantCommand(this::verifySamplePickup)
         ));
 
     }
 
     /**
+     * Verify that the sample is picked up. Retry the pickup, if necessary.
+     */
+    private void verifySamplePickup() {
+        //Check if the intake is fully closed.
+        //If it is fully closed, that means we dropped the sample.
+        //If it is not fully closed, that means we are holding the sample.
+
+        //TO DO: Lukas, add the code to check if the intake is fully closed.
+        boolean isIntakeFullyClosed = false;
+
+        if (isIntakeFullyClosed) {
+            //We need to retry the pickup.
+            currentPickupAttemptNumber++;
+            currentPickupAttemptFailed = true;
+        } else {
+            hasPickedUpSample = true;  // Mark that we have completed the pickup process
+            log("LocateSampleCommand2: Sample pickup complete.");
+        }
+    }
+
+    /**
      * Attempts to detect a sample using AI Vision within allowed time
      */
-    private void DetectSampleWithinTimeout() {
-        if (moveTimer.milliseconds() < searchMovementTimeout) {
-            detectedSample = robot.pipeline.chooseClosestValidSample();
-            log("LocateSampleCommand2: detectedSample is " + (detectedSample == null ? "not found" : "found"));
-        } else if (!isShifted) {
-            // If the sample is still not found and timeout has expired, shift position
-            shiftRobotBack();
-        } else {
-            // If shifting was performed but still no sample, cancel the command
-            cancel();
-            log("LocateSampleCommand2: Sample not found after shifting, cancelling...");
-        }
+    private void DetectSample() {
+        detectedSample = robot.pipeline.chooseClosestValidSample();
+        log("LocateSampleCommand2: DetectSample: detectedSample is " + (detectedSample == null ? "not found" : "found"));
     }
 
     private void shiftRobotBack() {
@@ -283,7 +512,6 @@ public class LocateSampleCommand extends CommandBase {
 
         if (stableTimer == null) {
             stableTimer = new ElapsedTime();
-            killTimer = new ElapsedTime();
         }
 
         Pose robotPose = robot.localizer.getPose();
@@ -296,27 +524,17 @@ public class LocateSampleCommand extends CommandBase {
         if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR)
             stableTimer.reset();
 
-        if (stableTimer.milliseconds() > stableTimerTimeout || killTimer.milliseconds() > killTimerTimeout) {
-            isShifted = true;
+        if (stableTimer.milliseconds() > stableTimerTimeout) {
             stableTimer = null;
-            killTimer = null;
-            moveTimer = null;
             startPose = robot.localizer.getPose();
             log("LocateSampleCommand2: Shifted robot back for better sample detection.");
-        }
-
-        if (currentBackwardShiftOffset>maxBackwardShiftDistance) {
-            //We haven't found the sample and reached the end of the allowed travel path,
-            //so we need to abandon the search
-            cancel();
         }
     }
 
     /**
      * Initializes times and starts searching
      */
-    private void initTimersAndStartSearching() {
-        moveTimer = new ElapsedTime();
+    private void initStartSearching() {
         startPose = robot.localizer.getPose();
         log("LocateSampleCommand2: start searching");
     }
@@ -376,5 +594,15 @@ public class LocateSampleCommand extends CommandBase {
         if (isLoggingEnabled) {
             System.out.println(text);
         }
+    }
+
+    /**
+     * Logs a message to the Driving Station and to the log file.
+     * @param caption caption for the Driving Station
+     * @param text the logged message
+     */
+    private void logTelemetry(String caption, String text) {
+        telemetry.addData(caption, text);
+        log(text);
     }
 }

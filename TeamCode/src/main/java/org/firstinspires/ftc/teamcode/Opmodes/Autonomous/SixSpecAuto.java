@@ -11,6 +11,7 @@ import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -49,15 +50,6 @@ public class SixSpecAuto extends CommandOpMode {
     private final RobotHardware robot = RobotHardware.getInstance();
 
     private double loopTime = 0.0;
-
-    public static Pose pick1Pos = new Pose(435, -405, -0.83);
-    public static Pose drop1Pos = new Pose(430, -315, -1.96);
-
-    public static Pose pick2Pos = new Pose(550, -540, -0.98);
-    public static Pose drop2Pos = new Pose(500, -440, -2.01);
-
-    public static Pose pick3Pos = new Pose(685, -735, -1.18);
-    public static Pose drop3Pos = new Pose(580, -700, -2.11);
 
     @Override
     public void initialize() {
@@ -119,7 +111,7 @@ public class SixSpecAuto extends CommandOpMode {
                         cmdStartCamera(),
                         cmdGoToStartPositionAndPrepareLiftAndIntake(spec1ScorePos),
                         cmdScoreSpecimen1(),
-                        cmdLocateAndGrabExtraSample(SampleType.Blue),
+                        cmdLocateAndGrabExtraSample(SampleType.Blue, telemetry),
                         cmdStopCamera(),
                         cmdDropOffExtraSample(preDropOffPos, dropOffPos),
                         cmdSweepFloorSamplesToOperator(sweep1Pos, drop1Pos, sweep2Pos, drop2Pos, sweep3Pos, drop3Pos),
@@ -290,10 +282,10 @@ public class SixSpecAuto extends CommandOpMode {
      * @param sampleType specify the color of the sample we are looking for.
      * @return scheduler command
      */
-    private Command cmdLocateAndGrabExtraSample(SampleType sampleType) {
+    private Command cmdLocateAndGrabExtraSample(SampleType sampleType, Telemetry telemetry) {
         return new SequentialCommandGroup(
                 new InstantCommand(() -> log("Executing cmdLocateAndGrabExtraSample")),
-                new LocateSampleCommand(sampleType)
+                new LocateSampleCommand(sampleType, telemetry)
         );
     }
 

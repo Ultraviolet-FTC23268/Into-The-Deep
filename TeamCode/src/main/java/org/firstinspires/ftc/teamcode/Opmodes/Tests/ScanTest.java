@@ -45,9 +45,9 @@ public class ScanTest extends CommandOpMode {
 
         Globals.AUTO = true;
         CommandScheduler.getInstance().reset();
-
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         gamepadEx.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(() -> schedule(new LocateSampleCommand(SampleType.Blue)));
+                .whenPressed(() -> schedule(new LocateSampleCommand(SampleType.Blue, telemetry)));
         gamepadEx.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(() -> schedule(new ExtendIntakeCommand()));
         gamepadEx.getGamepadButton(GamepadKeys.Button.START)
