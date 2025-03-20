@@ -24,13 +24,10 @@ import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.ExtendoCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.iClawCommand;
-import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Point;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
-import org.firstinspires.ftc.teamcode.Common.Subsystems.DepositSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import org.firstinspires.ftc.teamcode.Common.Vision.DetectionPipeline;
@@ -45,9 +42,9 @@ public class LocateSampleCommand extends CommandBase {
     public double slideExtendedPos = 0.4;
     public boolean finished = false;
     private boolean cancelled = false;
-    private boolean shift = false;
-    private boolean done = false;
-    private boolean loggingEnabled = true;
+    private boolean isShifted = false;
+    private boolean isRobotAtSampleLocation = false;
+    private boolean isLoggingEnabled = true;
 
     public static double wristMinPos = 0.28;
     public static double wristMaxPos = 0.93;
@@ -60,11 +57,80 @@ public class LocateSampleCommand extends CommandBase {
     public static PIDFController xController;
     public static PIDFController yController;
     public static PIDFController hController;
-    public static double ALLOWED_TRANSLATIONAL_ERROR = 10;
-    private ElapsedTime stable;
-    private ElapsedTime kill;
-    private ElapsedTime move;
 
+    /**
+     * Allowed translational error in mm
+     */
+    public static double ALLOWED_TRANSLATIONAL_ERROR = 10;
+
+    /**
+     * Stable motion timer
+     */
+    private ElapsedTime stableTimer;
+
+    /**
+     * Time to ensure stability around desired position of the robot.
+     */
+    private final int stableTimerTimeout = 100;
+
+    /**
+     * action timer for stopping action when it takes too long to execute
+     */
+    private ElapsedTime killTimer;
+
+    /**
+     * Allowed time for an individual action. Used to be 1250. Need to re-check this.
+     */
+    private final int killTimerTimeout = 2000;
+
+    /**
+     * movement timer
+     */
+
+    private ElapsedTime moveTimer;
+
+    /**
+     * Allowed time for searching for the extra sample in the submersible
+     */
+    private final int searchMovementTimeout = 2000;
+
+    /**
+     * Overall duration of process allowed before the action is cancelled
+     */
+    private final int cancellationTimeout = 3000;
+
+    /**
+     * Incremental distance for backward shift during a search
+     */
+    private final int backwardShiftDistance = 30;
+
+    /**
+     * Maximum allowed backward shift distance
+     */
+    private final int maxBackwardShiftDistance = 300;
+
+    /**
+     * Current backward shift offset. This is incremented each time we move back.
+     */
+    private int currentBackwardShiftOffset = 0;
+
+    /**
+     * Indicates that the robot is moving towards the sample
+     */
+    private boolean isMovingToSample = false;
+
+    /**
+     * Indicates that the robot is picking up the sample
+     */
+    private boolean isPickingUpSample = false;
+
+    /**
+     * Indicates that the robot has picked up the sample
+     */
+    private boolean hasPickedUpSample = false;
+
+    // Target pose for moving to the sample (set once, used across execute() calls)
+    private Pose moveToSampleTargetPose = null;
 
     public LocateSampleCommand(SampleType sampleType) {
         robot.pipeline.sampleType = sampleType;
@@ -83,96 +149,170 @@ public class LocateSampleCommand extends CommandBase {
 
     @Override
     public void execute() {
-
-        if (move == null) {
-            move = new ElapsedTime();
-            startPose = robot.localizer.getPose();
-            System.out.println("start searching");
+        if (cancelled) {
+            cancelSearch();
+            return;
         }
 
-        if(detectedSample == null && move.milliseconds() < 100) {
+        if (moveTimer == null) initTimersAndStartSearching();
+
+        if (detectedSample == null) {
+            DetectSampleWithinTimeout();
+            if (cancelled) {
+                cancelSearch();
+                return;
+            }
+        }
+        else {
+            //Sample found
+            if (isRobotAtSampleLocation) pickUpSample();
+            else moveToSample();
+        }
+    }
+
+    private void cancelSearch() {
+        finished = true;
+        log("LocateSampleCommand2: Command cancelled.");
+    }
+
+    /**
+     * Moves the robot to the sample once the sample has been found
+     */
+    private void moveToSample() {
+        //if (isRobotAtSampleLocation || isMovingToSample) return; // Prevent redundant calls
+        if (isRobotAtSampleLocation) return; // Prevent redundant calls
+
+        log("LocateSampleCommand2: Moving to sample at " + detectedSample.getTranslate());
+
+        if (moveToSampleTargetPose == null) {
+            moveToSampleTargetPose = new Pose(startPose.x - (TARGET_X - detectedSample.getTranslate().x),
+                    startPose.y + detectedSample.getTranslate().y,
+                    startPose.heading);
+
+            stableTimer = new ElapsedTime();
+            killTimer = new ElapsedTime();
+
+            // Mark as moving
+            isMovingToSample = true;
+        }
+
+        Pose robotPose = robot.localizer.getPose();
+        robot.drivetrain.set(getPower(robotPose, moveToSampleTargetPose));
+
+        // Check if we are close enough to the target
+        Pose delta = moveToSampleTargetPose.subtract(robotPose);
+        if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR)
+            stableTimer.reset();
+
+        if (delta.toVec2D().magnitude() <= ALLOWED_TRANSLATIONAL_ERROR && stableTimer.milliseconds() > stableTimerTimeout) {
+            isRobotAtSampleLocation = true;
+            isMovingToSample = false;
+            log("LocateSampleCommand2: Arrived at sample location.");
+        }
+
+
+    }
+
+    /**
+     * Calculates the wrist angle and attempts to grab the sample
+     */
+    private void pickUpSample() {
+        if (isPickingUpSample || hasPickedUpSample) return;
+
+        log("LocateSampleCommand2: picking up sample");
+        isPickingUpSample = true;
+
+        DetectionPipeline.AnalyzedSample prevSample = detectedSample;
+        detectedSample = robot.pipeline.chooseClosestValidSample();
+
+        double adjustedServoAngle = Range.clip(
+                wristNeutralPos - (((detectedSample != null ? detectedSample.getAngle() : prevSample.getAngle()) - 90) / 300),
+                wristMinPos,
+                wristMaxPos
+        );
+
+        robot.intakeWristServo.setPosition(adjustedServoAngle != wristMinPos ? adjustedServoAngle : wristNeutralPos);
+
+        CommandScheduler.getInstance().schedule(new SequentialCommandGroup(
+                new WaitCommand(250),
+                new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
+                new WaitCommand(150),
+                new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
+                new WaitCommand(325),
+                new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
+                new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED),
+                new InstantCommand(() -> {
+                    hasPickedUpSample = true;  // Mark that we have completed the pickup process
+                    isPickingUpSample = false; // Reset flag
+                    log("LocateSampleCommand2: Sample pickup complete.");
+                })
+        ));
+
+    }
+
+    /**
+     * Attempts to detect a sample using AI Vision within allowed time
+     */
+    private void DetectSampleWithinTimeout() {
+        if (moveTimer.milliseconds() < searchMovementTimeout) {
             detectedSample = robot.pipeline.chooseClosestValidSample();
-        }
-
-        else if(detectedSample == null && !shift) {
-            if (stable == null) {
-                stable = new ElapsedTime();
-                kill = new ElapsedTime();
-            }
-
-            Pose robotPose = robot.localizer.getPose();
-            Pose targetPose = new Pose(startPose.x - 300, startPose.y, startPose.heading);
-
-            robot.drivetrain.set(getPower(robotPose, targetPose));
-
-            Pose delta = targetPose.subtract(robotPose);
-            if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR)
-                stable.reset();
-
-            if (stable.milliseconds() > 100 || kill.milliseconds() > 1250) {
-                shift = true;
-                stable = null;
-                kill = null;
-                move = null;
-                startPose = robot.localizer.getPose();
-            }
-        }
-
-        else if(detectedSample == null && shift && move.milliseconds() > 100) {
+            log("LocateSampleCommand2: detectedSample is " + (detectedSample == null ? "not found" : "found"));
+        } else if (!isShifted) {
+            // If the sample is still not found and timeout has expired, shift position
+            shiftRobotBack();
+        } else {
+            // If shifting was performed but still no sample, cancel the command
             cancel();
-            System.out.println("cancelled");
+            log("LocateSampleCommand2: Sample not found after shifting, cancelling...");
+        }
+    }
+
+    private void shiftRobotBack() {
+        log("LocateSampleCommand2: Shifting the robot back...");
+
+        if (stableTimer == null) {
+            stableTimer = new ElapsedTime();
+            killTimer = new ElapsedTime();
         }
 
-        else if(detectedSample != null && !done) {
+        Pose robotPose = robot.localizer.getPose();
+        Pose targetPose = new Pose(robotPose.x - backwardShiftDistance, robotPose.y, robotPose.heading);
+        currentBackwardShiftOffset += backwardShiftDistance;
 
-            System.out.println("moving to located sample");
-            if (stable == null) {
-                stable = new ElapsedTime();
-                kill = new ElapsedTime();
-            }
-            if (stable.milliseconds() > 100 || kill.milliseconds() > 2000) done = true;
+        robot.drivetrain.set(getPower(robotPose, targetPose));
 
-            Pose robotPose = robot.localizer.getPose();
-            Pose targetPose = new Pose(startPose.x - (TARGET_X - detectedSample.getTranslate().x), startPose.y + detectedSample.getTranslate().y, startPose.heading);
+        Pose delta = targetPose.subtract(robotPose);
+        if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR)
+            stableTimer.reset();
 
-            robot.drivetrain.set(getPower(robotPose, targetPose));
-
-            Pose delta = targetPose.subtract(robotPose);
-            if (delta.toVec2D().magnitude() > ALLOWED_TRANSLATIONAL_ERROR)
-                stable.reset();
-
+        if (stableTimer.milliseconds() > stableTimerTimeout || killTimer.milliseconds() > killTimerTimeout) {
+            isShifted = true;
+            stableTimer = null;
+            killTimer = null;
+            moveTimer = null;
+            startPose = robot.localizer.getPose();
+            log("LocateSampleCommand2: Shifted robot back for better sample detection.");
         }
 
-        else if(done) {
-
-            System.out.println("picking up sample");
-            DetectionPipeline.AnalyzedSample prevSample = detectedSample;
-            detectedSample = robot.pipeline.chooseClosestValidSample();
-
-            servoAngle = Range.clip(wristNeutralPos - (((detectedSample != null ? detectedSample.getAngle() : prevSample.getAngle()) - 90) / 300), wristMinPos, wristMaxPos);
-            robot.intakeWristServo.setPosition(servoAngle != wristMinPos ? servoAngle : wristNeutralPos);
-
-            CommandScheduler.getInstance().schedule(new SequentialCommandGroup(
-                    new WaitCommand(250),
-                    new IntakeCommand(IntakeSubsystem.IntakeState.PICK_UP),
-                    new WaitCommand(150),
-                    new iClawCommand(IntakeSubsystem.ClawState.CLOSED),
-                    new WaitCommand(325),
-                    new IntakeCommand(IntakeSubsystem.IntakeState.EXTENDED),
-                    new ExtendoCommand(IntakeSubsystem.ExtendoState.RETRACTED)));
-
-            finished = true;
-
+        if (currentBackwardShiftOffset>maxBackwardShiftDistance) {
+            //We haven't found the sample and reached the end of the allowed travel path,
+            //so we need to abandon the search
+            cancel();
         }
+    }
 
-        if(cancelled)
-            finished = true;
-
+    /**
+     * Initializes times and starts searching
+     */
+    private void initTimersAndStartSearching() {
+        moveTimer = new ElapsedTime();
+        startPose = robot.localizer.getPose();
+        log("LocateSampleCommand2: start searching");
     }
 
     @Override
     public boolean isFinished() {
-        return finished;
+        return finished || cancelled;
     }
 
     @Override
@@ -217,4 +357,13 @@ public class LocateSampleCommand extends CommandBase {
         return new Pose(x_rotated * X_GAIN, y_rotated * Y_GAIN, hPower);
     }
 
+    /**
+     * Logs the passed-in text to console.
+     * @param text to log
+     */
+    private void log(String text) {
+        if (isLoggingEnabled) {
+            System.out.println(text);
+        }
+    }
 }

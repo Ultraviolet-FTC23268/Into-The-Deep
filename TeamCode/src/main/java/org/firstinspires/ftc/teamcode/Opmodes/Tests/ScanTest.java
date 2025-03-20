@@ -1,35 +1,26 @@
 
 package org.firstinspires.ftc.teamcode.Opmodes.Tests;
 
-import android.util.Size;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
-import com.arcrobotics.ftclib.command.SequentialCommandGroup;
-import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.LocateSampleCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.DriveCommand.PositionCommand;
+import org.firstinspires.ftc.teamcode.Common.Commands.AutoCommand.OldLocateSampleCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.MacroCommand.ExtendIntakeCommand;
-import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.IntakeCommand;
 import org.firstinspires.ftc.teamcode.Common.Commands.SystemCommand.iClawCommand;
-import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Point;
 import org.firstinspires.ftc.teamcode.Common.Drive.geometry.Pose;
 import org.firstinspires.ftc.teamcode.Common.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Common.Utility.Globals;
 import org.firstinspires.ftc.teamcode.Common.Utility.RobotHardware;
 import org.firstinspires.ftc.teamcode.Common.Vision.DetectionPipeline;
 import org.firstinspires.ftc.teamcode.Common.Vision.SampleType;
-import org.firstinspires.ftc.vision.VisionPortal;
 
 @Config
 @TeleOp(name = "Scan Test")
